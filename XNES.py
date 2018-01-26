@@ -17,7 +17,8 @@ class XNES:
                average_baseline=True,        # set baseline to average of batch
                weight_decay=0.01,            # weight decay coefficient
                rank_fitness=True,            # use rank rather than fitness numbers
-               forget_best=True):            # don't keep the historical best solution
+               forget_best=True              # don't keep the historical best solution
+               ):            
 
     self.num_params = num_params
     self.sigma_init = sigma_init

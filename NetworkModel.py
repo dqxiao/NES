@@ -5,6 +5,12 @@ import numpy as np
 from torch.autograd import Variable
 
 
+# using the simplest neural network to perform our experiments agian 
+# class SimpleNet(nn.Module): 
+
+#   def __init__(self):
+#     super(SimpleNet,self)
+
 
 class Net(nn.Module):
   def __init__(self):
@@ -27,6 +33,7 @@ class Net(nn.Module):
     x = x.view(-1, self.num_filter2*7*7)   # reshape Variable
     x = self.fc(x)
     return F.log_softmax(x)
+    # return x 
 
 
 def cal_nparams(model):
@@ -83,6 +90,7 @@ def evaluate(model, test_loader, print_mode=True, return_loss=False):
   for data, target in test_loader:
 
     output = model(Variable(data))
+    output = F.log_softmax(output)
     test_loss += F.nll_loss(output, Variable(target), size_average=False).data[0] # sum up batch loss
     _,pred=torch.max(output.data,1)
     correct += (pred==target).sum()
@@ -96,6 +104,6 @@ def evaluate(model, test_loader, print_mode=True, return_loss=False):
       test_loss, correct, len(test_loader.dataset),
       100. * acc))
 
-  if return_loss:
-    return test_loss
-  return acc,return_loss
+  # if return_loss:
+  #   return test_loss
+  return acc,test_loss

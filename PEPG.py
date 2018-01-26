@@ -124,7 +124,7 @@ class PEPG:
     change_mu = self.learning_rate * np.dot(rT, epsilon)
     self.mu += change_mu
 
-    print(change_mu[0])
+    #print(change_mu[0])
 
     # adjust sigma according to the adaptive sigma calculation
     change_sigma = self.sigma_alpha * delta_sigma

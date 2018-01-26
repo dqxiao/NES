@@ -171,29 +171,31 @@ if __name__=="__main__":
 	d=dict()
 
 
-	xneslog=dict()
 
-	for noise in [0.1,0.3,0.5,0.7]:
-		muteRate=noise
-		testLog=[]
-		es = XNES(NPARAMS,
-		          popsize=NPOPULATION,
-		          sigma_init=0.01,
-		          sigma_decay=0.999,
-		          sigma_alpha=0.2,
-		          sigma_limit=0.01,
-		          learning_rate=0.01,            # learning rate for standard deviation
-		          learning_rate_decay = 0.9999, # annealing the learning rate
-		          learning_rate_limit = 0.01,   # stop annealing learning rate
-		          average_baseline=False,
-		         )
-		for epoch in range(1,100):
-			trainES(epoch,printTrain=True)
-			test_acc,test_loss=evaluate(model, test_loader, print_mode=True)
-			valid_acc,valid_loss=evaluate(model, valid_loader,print_mode=True)
-			testLog.append([test_acc,valid_acc,test_loss,valid_loss])
-		xneslog[noise]=copy.copy(testLog)  
-	pickle_write(xneslog,"xNES-noise-dict-OG","-NN")
+
+	# xneslog=dict()
+
+	# for noise in [0.1,0.3,0.5,0.7]:
+	# 	muteRate=noise
+	# 	testLog=[]
+	# 	es = XNES(NPARAMS,
+	# 	          popsize=NPOPULATION,
+	# 	          sigma_init=0.01,
+	# 	          sigma_decay=0.999,
+	# 	          sigma_alpha=0.2,
+	# 	          sigma_limit=0.01,
+	# 	          learning_rate=0.01,            # learning rate for standard deviation
+	# 	          learning_rate_decay = 0.9999, # annealing the learning rate
+	# 	          learning_rate_limit = 0.01,   # stop annealing learning rate
+	# 	          average_baseline=False,
+	# 	         )
+	# 	for epoch in range(1,100):
+	# 		trainES(epoch,printTrain=True)
+	# 		test_acc,test_loss=evaluate(model, test_loader, print_mode=True)
+	# 		valid_acc,valid_loss=evaluate(model, valid_loader,print_mode=True)
+	# 		testLog.append([test_acc,valid_acc,test_loss,valid_loss])
+	# 	xneslog[noise]=copy.copy(testLog)  
+	# pickle_write(xneslog,"xNES-noise-adaptive-dict-OG","-NN")
 
 	
 

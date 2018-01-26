@@ -20,10 +20,12 @@ from PEPG import *
 from NetworkModel import * 
 from ESUtil import * 
 from XNES import *
+from XNESAdaptive import *
 import pickle 
 
 import time 
 from RewardEvaluator import *
+import sys
 
 
 def pickle_write(data,method, fname):
@@ -83,6 +85,24 @@ def createXNES():
 	return es 
 
 
+def createXNESAd():
+	es = XNESAdaptive(NPARAMS,
+              popsize=NPOPULATION,
+              sigma_init=0.01,
+              sigma_decay=0.999,
+              sigma_alpha=0.2,
+              sigma_limit=0.01,
+              learning_rate=0.1,            # learning rate for standard deviation
+              learning_rate_decay = 0.9999, # annealing the learning rate
+              learning_rate_limit = 0.01,   # stop annealing learning rate
+              average_baseline=False,
+              diversity_base= diversity_base
+             )
+
+	return es 
+
+
+
 
 def testRuns(training_log, trainLog=True):
 	best_valid_acc = 0
@@ -101,20 +121,25 @@ def testRuns(training_log, trainLog=True):
 	      loss = F.nll_loss(output, target) # loss function
 	      reward[i] = - loss.data[0]
 	    best_raw_reward = reward.max()
+
 	    reward = compute_centered_ranks(reward)
 	    l2_decay = compute_weight_decay(weight_decay_coef, solutions)
+
 	    reward += l2_decay
 	    es.tell(reward)
 	    result = es.result()
+	    resultLogs=[abs(result[1]),abs(reward.mean()),calEntropy(result[3]),abs(reward.std())]
 	    if (batch_idx % 50 == 0):
 	    	print(epoch, batch_idx, best_raw_reward,result[1])	    
 	  curr_solution = es.current_param()
 	  update_model(curr_solution, model, model_shapes)
 
 	  valid_acc,valid_loss = evaluate(model, valid_loader, print_mode=False)
+	  test_acc, test_loss =evaluate(model,test_loader,print_mode=False)
 	  #epoch 
+
 	  if trainLog: 
-	  	training_log.append([valid_acc,valid_loss]) 
+	  	training_log.append([valid_acc,valid_loss,test_acc,test_loss]+resultLogs) 
 
 	  print('valid_acc', valid_acc * 100.)
 	  if valid_acc >= best_valid_acc:
@@ -137,7 +162,7 @@ def configRun():
 
 	torch.manual_seed(0)
 	np.random.seed(0)
-	NPOPULATION=101  
+	
 	weight_decay_coef = 0.1
 
 	Args = namedtuple('Args', ['batch_size', 'test_batch_size', 'epochs', 'lr', 'cuda', 'seed', 'log_interval'])
@@ -157,7 +182,7 @@ def dataFeed():
 
 	test_loader = torch.utils.data.DataLoader(
   		datasets.MNIST('MNIST_data', train=False, transform=transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.1307,), (0.3081,))])),
-  			batch_size=args.batch_size, shuffle=False, **kwargs)
+  			batch_size=args.batch_size, shuffle=True, **kwargs)
 
 
 if __name__=="__main__":
@@ -165,21 +190,29 @@ if __name__=="__main__":
 	configRun()
 	global model
 	global es
+	global diversity_base 
+	diversity_base= float(sys.argv[1])
+
 
 	training_log=[]
 	dataFeed()
 	model=Net()
 	NPARAMS,model_shapes=cal_nparams(model)
 	
+	NPOPULATION=int(4+3*np.ceil(np.log(NPARAMS)))
+	NPOPULATION= int(NPOPULATION/2)*2+1
+	print(NPOPULATION)
+
+	
 	d=dict()
 
 
-	es= createXNES()
-	print("Debug xNES function")
+	es = createXNESAd()
+	print("Debug XNES Adaptive function")
 	training_log=[] 
 	testRuns(training_log,trainLog=True)
 	if len(training_log)!=0:
-		pickle_write(np.array(training_log),"xNES-v2","-NN")
+		pickle_write(np.array(training_log),"xNES_db"+str(diversity_base),"-NN")
 
 	
 

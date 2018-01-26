@@ -39,3 +39,43 @@ def compute_novelty_obs(obs,K=10):
   #print(spareness)
 
   return spareness 
+
+class SlideWindow(object):
+    """store the recent information for need """
+    def __init__(self,capacity):
+        self.vals = [] 
+        self.capacity = capacity
+        self.index = 0 
+
+    def update(self,val):
+        if self.index==len(self.vals) and self.index<self.capacity:
+            self.vals.append(val)  
+        else:
+            # more than capacity 
+            self.index = self.index % self.capacity
+            self.vals[self.index]=val 
+        self.index +=1
+
+    def mean(self):
+        return np.array(self.vals).mean()
+    def std(self):
+        return np.array(self.vals).std()
+
+
+    def lastDiff(self):
+        
+        c=self.index-1
+        if c==0:
+            l=self.capacity-1 
+        else:
+            l=c-1 
+
+        return self.vals[c]-self.vals[l]
+
+    def evident(self):
+        l=len(self.vals)
+        return l>3 
+
+def calEntropy(x):
+    _x=np.log(x)
+    return _x.sum()
