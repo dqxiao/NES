@@ -90,7 +90,7 @@ def evaluate(model, test_loader, print_mode=True, return_loss=False):
   for data, target in test_loader:
 
     output = model(Variable(data))
-    output = F.log_softmax(output)
+    # output = F.log_softmax(output)
     test_loss += F.nll_loss(output, Variable(target), size_average=False).data[0] # sum up batch loss
     _,pred=torch.max(output.data,1)
     correct += (pred==target).sum()

@@ -122,13 +122,13 @@ def testRuns(training_log, trainLog=True):
 	      reward[i] = - loss.data[0]
 	    best_raw_reward = reward.max()
 
-	    reward = compute_centered_ranks(reward)
-	    l2_decay = compute_weight_decay(weight_decay_coef, solutions)
+	    # reward = compute_centered_ranks(reward)
+	    # l2_decay = compute_weight_decay(weight_decay_coef, solutions)
 
-	    reward += l2_decay
+	    # reward += l2_decay
 	    es.tell(reward)
 	    result = es.result()
-	    resultLogs=[abs(result[1]),abs(reward.mean()),calEntropy(result[3]),abs(reward.std())]
+	    resultLogs=[abs(result[1]),abs(reward.mean()),calEntropy(result[3]),abs(reward.std()),result[-1]]
 	    if (batch_idx % 50 == 0):
 	    	print(epoch, batch_idx, best_raw_reward,result[1])	    
 	  curr_solution = es.current_param()

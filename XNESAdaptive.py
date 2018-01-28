@@ -56,8 +56,8 @@ class XNESAdaptive:
             self.forget_best = True  # always forget the best one if we rank
         self.done_threshold = done_threshold
 
-        self.rewardWindow = SlideWindow(num_params)  # adaptive diversity function
-        self.entropyWindow = SlideWindow(num_params)  # adaptive diversity function
+        self.rewardWindow = SlideWindow(20)  # adaptive diversity function
+        self.entropyWindow = SlideWindow(20)  # adaptive diversity function
         self.diversityWindow = SlideWindow(4)  # recording the history diversity
 
         self.diversity_base = diversity_base
@@ -166,7 +166,7 @@ class XNESAdaptive:
             self.diversity_best = min(self.diversity_best,
                     diversity_bound)
             self.diversity_best = max(0, self.diversity_best)
-            if self.rewardWindow.lastDiff() < 0 \
+            if self.rewardWindow.lastDiff() < -self.rewardWindow.std() \
                 or self.entropyWindow.lastDiff() < 0:
                 self.diversity_best = 0
         e_sigma = self.learning_rate * self.sigma \
