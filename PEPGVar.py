@@ -1,6 +1,6 @@
 from ESUtil import * 
 
-class PEPG:
+class PEPGVar:
   '''Extension of PEPG with bells and whistles.'''
   def __init__(self, num_params,             # number of model parameters
                sigma_init=0.10,              # initial standard deviation
@@ -15,7 +15,10 @@ class PEPG:
                average_baseline=True,        # set baseline to average of batch
                weight_decay=0.01,            # weight decay coefficient
                rank_fitness=True,            # use rank rather than fitness numbers
-               forget_best=True):            # don't keep the historical best solution
+               forget_best=True ,
+               diversity_base=0.10,
+               option = 0 
+               ):            # don't keep the historical best solution
 
     self.num_params = num_params
     self.sigma_init = sigma_init
@@ -46,6 +49,8 @@ class PEPG:
     if self.rank_fitness:
       self.forget_best = True # always forget the best one if we rank
     self.done_threshold = done_threshold
+    self.diversity_base = diversity_base
+    self.option =option
 
   def rms_stdev(self):
     sigma = self.sigma
@@ -128,9 +133,18 @@ class PEPG:
 
     # adjust sigma according to the adaptive sigma calculation
     change_sigma = self.sigma_alpha * delta_sigma
+
+    self.diversity_best =self.diversity_base
+    eSigma = self.learning_rate*self.diversity_best * np.power(self.sigma, self.option)
+
     change_sigma = np.minimum(change_sigma, self.sigma)
     change_sigma = np.maximum(change_sigma, - 0.5 * self.sigma)
+
     self.sigma += change_sigma
+    self.sigma += eSigma
+
+
+
     #done 
     self.sigma[self.sigma > self.sigma_limit] *= self.sigma_decay
     
@@ -150,4 +164,4 @@ class PEPG:
     return (self.best_mu, self.best_reward, self.curr_best_reward, self.sigma, 0)
 
   def name(self):
-    return "PEPG"
+    return "PEPGVar"
