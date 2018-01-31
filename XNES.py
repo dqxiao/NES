@@ -49,6 +49,8 @@ class XNES:
     if self.rank_fitness:
       self.forget_best = True # always forget the best one if we rank
     self.done_threshold = done_threshold
+    # I want to refactor my code in a neaty way 
+    
 
   def rms_stdev(self):
     sigma = self.sigma

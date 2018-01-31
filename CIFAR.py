@@ -17,11 +17,11 @@ import copy
 from SimpleGA import * 
 from NoveltyGA import *
 from PEPG import *
-from model.NetworkModel import * 
+from NetworkModel import * 
+from vgg import * 
 from ESUtil import * 
 from XNES import *
-from XNESVar import *
-from XNESSA import * 
+from XNESAdaptive import *
 import pickle 
 
 import time 
@@ -78,7 +78,7 @@ def createXNES():
               sigma_decay=0.999,
               sigma_alpha=0.2,
               sigma_limit=0.01,
-              learning_rate=0.01,            # learning rate for standard deviation
+              learning_rate=0.1,            # learning rate for standard deviation
               learning_rate_decay = 0.9999, # annealing the learning rate
               learning_rate_limit = 0.01,   # stop annealing learning rate
               average_baseline=False,
@@ -86,8 +86,8 @@ def createXNES():
 	return es 
 
 
-def createXNESVar():
-	es = XNESVar(NPARAMS,
+def createXNESAd():
+	es = XNESAdaptive(NPARAMS,
               popsize=NPOPULATION,
               sigma_init=0.01,
               sigma_decay=0.999,
@@ -97,29 +97,13 @@ def createXNESVar():
               learning_rate_decay = 0.9999, # annealing the learning rate
               learning_rate_limit = 0.01,   # stop annealing learning rate
               average_baseline=False,
-              diversity_base= diversity_base, 
-              option=opt
+              diversity_base= diversity_base
              )
 
 	return es 
 
 
-def createXNESSA():
-	es = XNESSA(NPARAMS,
-              popsize=NPOPULATION,
-              sigma_init=0.01,
-              sigma_decay=0.999,
-              sigma_alpha=0.2,
-              sigma_limit=0.01,
-              learning_rate=0.1,            # learning rate for standard deviation
-              learning_rate_decay = 0.9999, # annealing the learning rate
-              learning_rate_limit = 0.01,   # stop annealing learning rate
-              average_baseline=False,
-              diversity_base= diversity_base, 
-              option = opt
-             )
 
-	return es 
 
 def testRuns(training_log, trainLog=True):
 	best_valid_acc = 0
@@ -127,7 +111,6 @@ def testRuns(training_log, trainLog=True):
 	for epoch in range(1, args.epochs + 1):
 	  # train loop
 	  model.eval()
-	  resultLogs=np.zeros(5)
 	  for batch_idx, (data, target) in enumerate(train_loader):
 	    data, target = Variable(data), Variable(target)
 	    solutions = es.ask() 
@@ -144,30 +127,22 @@ def testRuns(training_log, trainLog=True):
 	    # l2_decay = compute_weight_decay(weight_decay_coef, solutions)
 
 	    # reward += l2_decay
-	    es.tell(reward)   #want to maximize the value 
+	    es.tell(reward)
 	    result = es.result()
-	    
+	    resultLogs=[abs(result[1]),abs(reward.mean()),calEntropy(result[3]),abs(reward.std()),result[-1]]
 	    if (batch_idx % 50 == 0):
-	    	print(epoch, batch_idx, best_raw_reward,result[1],result[-1])	 
-	    	# print(epoch, batch_idx, result[-1])
-	    	temp=[abs(result[1]),abs(reward.mean()),calEntropy(result[3]),abs(reward.std()),result[-1]] 
-	    	temp=np.array(temp)
-	    	resultLogs+=temp 
-	    	# resultLogs=[abs(result[1]),abs(reward.mean()),calEntropy(result[3]),abs(reward.std()),result[-1]] 
-	   # resultlog= 
+	    	print(epoch, batch_idx, best_raw_reward,result[1])	    
 	  curr_solution = es.current_param()
 	  update_model(curr_solution, model, model_shapes)
-	  resultLogs/=batch_idx/50
 
-	  valid_acc,valid_loss = evaluate(model, valid_loader, print_mode=True)
-	  test_acc, test_loss = evaluate(model,test_loader,print_mode=True)
+	  valid_acc,valid_loss = evaluate(model, valid_loader, print_mode=False)
+	  test_acc, test_loss =evaluate(model,test_loader,print_mode=False)
 	  #epoch 
 
 	  if trainLog: 
-	  	training_log.append([valid_acc,valid_loss,test_acc,test_loss]+list(resultLogs)) 
+	  	training_log.append([valid_acc,valid_loss,test_acc,test_loss]+resultLogs) 
 
 	  print('valid_acc', valid_acc * 100.)
-	  print('diversity', resultLogs[-1])
 	  if valid_acc >= best_valid_acc:
 	    best_valid_acc = valid_acc
 	    best_model = copy.deepcopy(model)
@@ -192,12 +167,15 @@ def configRun():
 	weight_decay_coef = 0.1
 
 	Args = namedtuple('Args', ['batch_size', 'test_batch_size', 'epochs', 'lr', 'cuda', 'seed', 'log_interval'])
-	args = Args(batch_size=100, test_batch_size=1000, epochs=100, lr=0.001, cuda=False, seed=0, log_interval=10)
+	args = Args(batch_size=100, test_batch_size=1000, epochs=50, lr=0.001, cuda=False, seed=0, log_interval=10)
 
 
 
 def cifar10Feed():
-
+	global train_loader
+	global valid_loader
+	global test_loader
+	
 	transform_train = transforms.Compose([
 	transforms.RandomCrop(32, padding=4),
 	transforms.RandomHorizontalFlip(),
@@ -210,13 +188,13 @@ def cifar10Feed():
 	transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
 	])
 
-	trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
+	trainset = datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
 	train_loader = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True, num_workers=2)
 
 	valid_loader = train_loader
 
 
-	testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
+	testset = datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
 	test_loader = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False, num_workers=2)
 
 	# done 
@@ -243,44 +221,36 @@ if __name__=="__main__":
 	configRun()
 	global model
 	global es
-	global diversity_base
-	global opt
+	global diversity_base 
 	diversity_base= float(sys.argv[1])
-	if len(sys.argv)>2:
-		opt=int(sys.argv[2])
-
-
-	
+	vggName= sys.argv[2]
 
 
 	training_log=[]
-	dataFeed()
-	model =MLPNet() 
+	cifar10Feed()
+	
+	model=VGG(vggName)
+	
 	NPARAMS,model_shapes=cal_nparams(model)
 	
-	# NPOPULATION=int(4+3*np.ceil(np.log(NPARAMS)))
-	# NPOPULATION= int(NPOPULATION/2)*2+1
-	NPOPULATION = 101 
+	NPOPULATION=int(4+3*np.ceil(np.log(NPARAMS)))
+	NPOPULATION= int(NPOPULATION/2)*2+1
 	print(model.name())
 	print("popsize:{}".format(NPOPULATION))
 
 	
-	esFunc=dict()
-	esFunc['Var']=createXNESVar()
-	esFunc['SA']=createXNESSA()
-	esFunc['PEPG']=createPEPG()
+	# # d=dict()
 
-	# if sys.argv[3]=='Var':
-	# 	es = createXNESVar()
-	# else:
-	# 	es = createXNESSA()
 
-	print("Debug {} function".format(es.name()))
-	training_log=[] 
+	es = createXNESAd()
+
+	print("Debug XNES Adaptive function")
+	training_log=[1] 
 	testRuns(training_log,trainLog=True)
-	fname = "BP-{}-{}".format(es.name(),diversity_base)
-	folder ="{}/{}/".format("MNIST","MLP") 
-	pickle_write(np.array(training_log),folder+fname,"-NN")
+	if len(training_log)!=0:
+		fname = "{}-db_{}".format("XNES",diversity_base)
+		folder ="{}/{}/".format("CIFAR10",model.name())
+		pickle_write(np.array(training_log),folder+fname,"-NN")
 
 	
 

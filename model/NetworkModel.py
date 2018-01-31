@@ -5,11 +5,23 @@ import numpy as np
 from torch.autograd import Variable
 
 
-# using the simplest neural network to perform our experiments agian 
-# class SimpleNet(nn.Module): 
+class MLPNet(nn.Module):
+    def __init__(self):
+        super(MLPNet, self).__init__()
+        self.fc1 = nn.Linear(28*28, 40)
+        # self.fc2 = nn.Linear(500, 256)
+        self.fc3 = nn.Linear(40, 10)
+    def forward(self, x):
+        x = x.view(-1, 28*28)
+        x = F.relu(self.fc1(x))
+        # x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        return F.log_softmax(x)  
+    
+    def name(self):
+        return "MLP"
 
-#   def __init__(self):
-#     super(SimpleNet,self)
+
 
 
 class Net(nn.Module):
@@ -90,7 +102,6 @@ def evaluate(model, test_loader, print_mode=True, return_loss=False):
   for data, target in test_loader:
 
     output = model(Variable(data))
-    # output = F.log_softmax(output)
     test_loss += F.nll_loss(output, Variable(target), size_average=False).data[0] # sum up batch loss
     _,pred=torch.max(output.data,1)
     correct += (pred==target).sum()

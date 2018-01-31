@@ -17,7 +17,7 @@ import copy
 from SimpleGA import * 
 from NoveltyGA import *
 from PEPG import *
-from NetworkModel import * 
+from model.NetworkModel import * 
 from ESUtil import * 
 from XNES import *
 import pickle 
@@ -26,12 +26,13 @@ import time
 from RewardEvaluator import *
 import torch.optim as optim
 from numpy.linalg import inv
+import sys 
 
 
 def pickle_write(data,method, fname):
-	pickle_out=open(method+fname+".pickle","wb")
-	pickle.dump(data,pickle_out)
-	pickle_out.close()
+    pickle_out=open(method+fname+".pickle","wb")
+    pickle.dump(data,pickle_out)
+    pickle_out.close()
 
 
 def createNGA():
@@ -85,45 +86,45 @@ def createXNES():
 	return es 
 
 
-def noiseRecord(T,muteRate):
+# def noiseRecord(T,muteRate):
 
-	# T[2][7]=muteRate
-	# T[2][2]=1-muteRate
-	# T[7][2]=muteRate
-	# T[7][7]=1-muteRate
-	#
-	# 3->8 
-	T[3,8],T[3,3]=muteRate,1-muteRate
-	T[8,3],T[8,8]=muteRate,1-muteRate
-	# 6->9 
-	T[6,9],T[6,6]=muteRate,1-muteRate
-	T[9,6],T[9,9]=muteRate,1-muteRate
-	# 1->7 
-	T[1,7],T[1,1]=muteRate,1-muteRate
-	T[7,1],T[7,7]=muteRate,1-muteRate
-
-
-def noiseTransfer():
-
-	T=dict()
-	for x,y in [[3,8],[6,9],[7,1]]:
-		T[x]=y 
-		T[y]=x 
-	T[0]=0 
-	T[2]=2
-	T[5]=5
-	T[4]=4
-	return T
+# 	# T[2][7]=muteRate
+# 	# T[2][2]=1-muteRate
+# 	# T[7][2]=muteRate
+# 	# T[7][7]=1-muteRate
+# 	#
+# 	# 3->8 
+# 	T[3,8],T[3,3]=muteRate,1-muteRate
+# 	T[8,3],T[8,8]=muteRate,1-muteRate
+# 	# 6->9 
+# 	T[6,9],T[6,6]=muteRate,1-muteRate
+# 	T[9,6],T[9,9]=muteRate,1-muteRate
+# 	# 1->7 
+# 	T[1,7],T[1,1]=muteRate,1-muteRate
+# 	T[7,1],T[7,7]=muteRate,1-muteRate
 
 
-def noiseIn(target, muteRate):
-	m = len(target)
-	r = np.random.randn(m)
-	T = noiseTransfer()
-	for idx in range(m):
-		if r[idx]<muteRate:
-			target[idx]=T[target[idx]]
-	#
+# def noiseTransfer():
+
+# 	T=dict()
+# 	for x,y in [[3,8],[6,9],[7,1]]:
+# 		T[x]=y 
+# 		T[y]=x 
+# 	T[0]=0 
+# 	T[2]=2
+# 	T[5]=5
+# 	T[4]=4
+# 	return T
+
+
+# def noiseIn(target, muteRate):
+# 	m = len(target)
+# 	r = np.random.randn(m)
+# 	T = noiseTransfer()
+# 	for idx in range(m):
+# 		if r[idx]<muteRate:
+# 			target[idx]=T[target[idx]]
+# 	#
 		
 
 
@@ -135,21 +136,20 @@ def train(epoch,printTrain=True):
 		#     data, target = data.cuda(), target.cuda()
 		
 		target_c=np.copy(target)
-		T=torch.eye(10)
+		
 
 		data, target= Variable(data), Variable(target)
 		optimizer.zero_grad()
 		output = model(data)
-		lossF =  nn.CrossEntropyLoss()
-		loss = lossF(output,target)
+		loss = F.nll_loss(output, target) 
 		
 		loss.backward()
 		optimizer.step()
 		target=target_c
-		if batch_idx % 1000 == 0 and printTrain:
-			print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-				epoch, batch_idx * len(data), len(train_loader.dataset),
-				100. * batch_idx / len(train_loader), loss.data[0]))
+		# if batch_idx % 1000 == 0 and printTrain:
+		# 	print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+		# 		epoch, batch_idx * len(data), len(train_loader.dataset),
+		# 		100. * batch_idx / len(train_loader), loss.data[0]))
 
 
 def trainES(epoch, printTrain=True):
@@ -225,32 +225,27 @@ if __name__=="__main__":
 	global muteRate
 	global optimizer
 
-	training_log=[]
+	
 	dataFeed()
-	model=Net()
+	model = MLPNet()
 	NPARAMS,model_shapes=cal_nparams(model)
-	#optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=0.5)
+	momentum =float(sys.argv[1])
+	optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=momentum)
 
-	d=dict()
+	
 
-	model = Net()
-
-	xnesAda =
+	
 
 
-	# sgdlog=dict()
+	training_log=[]
+	for epoch in range(1,100):
+		train(epoch,printTrain=True)
+		test_acc,test_loss=evaluate(model, test_loader, print_mode=True)
+		valid_acc,valid_loss=evaluate(model, valid_loader,print_mode=True)
+		training_log.append([valid_acc,valid_loss,test_acc,test_loss])
 
-	# for noise in [0.3,0.5,0.7]:
-	# 	muteRate=noise
-	# 	testLog=[]
-	# 	model = Net()
-	# 	optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=0)
-	# 	for epoch in range(1,50):
-	# 		train(epoch,printTrain=True)
-	# 		test_acc,test_loss=evaluate(model, test_loader, print_mode=True)
-	# 		valid_acc,valid_loss=evaluate(model, valid_loader,print_mode=True)
-	# 		testLog.append([test_acc,valid_acc,test_loss,valid_loss])
-	# 	sgdlog[noise]=copy.copy(testLog) 
-	# sgdlog["setting"]=args
+	fname = "{}-{}".format("SGDM",momentum)
+	folder ="{}/{}/".format("MNIST","MLP") 
+	pickle_write(np.array(training_log),folder+fname,"-NN")
 
-	# pickle_write(sgdlog,"sgd","-NN")
+	

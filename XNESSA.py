@@ -1,11 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from ESUtil import *
+from Optimizer import *
 
+class XNESSA:
 
-class XNESAdaptive:
-
-    '''XNES interpreation for multinormal distribution where co-variance matrix is diagonal matrix'''
+    '''XNES interpreation self-adaptive'''
 
     def __init__(  # number of model parameters
         self,
@@ -24,6 +24,7 @@ class XNESAdaptive:
         rank_fitness=True,
         forget_best=True,
         diversity_base=0.10,
+        option = 0 
         ):
 
         self.num_params = num_params
@@ -56,11 +57,13 @@ class XNESAdaptive:
             self.forget_best = True  # always forget the best one if we rank
         self.done_threshold = done_threshold
 
-        self.rewardWindow = SlideWindow(20)  # adaptive diversity function
-        self.entropyWindow = SlideWindow(20)  # adaptive diversity function
+        self.rewardWindow = SlideWindow(num_params)  # adaptive diversity function
+        self.entropyWindow = SlideWindow(num_params)  # adaptive diversity function
         self.diversityWindow = SlideWindow(4)  # recording the history diversity
 
         self.diversity_base = diversity_base
+        self.option =option
+        self.optimizer = SGD(self,learning_rate) 
 
     def rms_stdev(self):
         sigma = self.sigma
@@ -143,8 +146,11 @@ class XNESAdaptive:
     # using xNES idea to learn next step
 
         epsilon = self.epsilon_full
-        change_mu = self.learning_rate * np.dot(reward, epsilon)  # done
-        self.mu += change_mu
+        change_mu = np.dot(reward, epsilon)  # done
+        self.optimizer.stepsize = self.learning_rate
+        change_ratio= self.optimizer.update(-1*change_mu)
+        # change_mu = self.learning_rate * np.dot(reward,epsilon) # done 
+        # self.mu  +=  change_mu 
 
     # #using the batch size is needed or not
 
@@ -158,20 +164,26 @@ class XNESAdaptive:
         dM = 0.5 * self.learning_rate * covGradient  # cov-variance difference
 
     # simple obseravation based on the entropy
-
-        self.diversity_best = self.diversity_base
         if self.rewardWindow.evident():
-            diversity_bound = self.rewardWindow.lastDiff() \
-                / self.entropyWindow.lastDiff()  # be positive
-            self.diversity_best = min(self.diversity_best,
-                    diversity_bound)
-            self.diversity_best = max(0, self.diversity_best)
-            if self.rewardWindow.lastDiff() < -self.rewardWindow.std() \
-                or self.entropyWindow.lastDiff() < 0:
-                self.diversity_best = 0
-        e_sigma = self.learning_rate * self.sigma \
-                * self.diversity_base
-        self.sigma = self.sigma * np.exp(dM) + e_sigma  # based-on my understanding
+
+            if self.entropyWindow.lastDiff() * self.rewardWindow.lastDiff() >0:
+                self.diversity_best= self.diversity_base
+            else:
+                db =-1*self.rewardWindow.lastDiff()/self.entropyWindow.lastDiff()
+                self.diversity_best = min(db,self.diversity_base)
+
+            if self.rewardWindow.lastDiff()< self.rewardWindow.std():
+                self.diversity_best = 0 
+        else:
+            self.diversity_best =0 
+
+        #done 
+        self.sigma = self.sigma * np.exp(dM)
+        e_sigma = self.learning_rate * np.power(self.sigma,self.option) \
+                * self.diversity_best
+        
+        self.sigma += e_sigma  # based-on my understanding
+        # print(self.diversity_best)
 
         self.sigma[self.sigma > self.sigma_limit] *= self.sigma_decay
         if self.learning_rate > self.learning_rate_limit:
@@ -189,3 +201,5 @@ class XNESAdaptive:
     def result(self):  # return best params so far, along with historically best reward, curr reward, sigma
         return (self.best_mu, self.best_reward, self.curr_best_reward,
                 self.sigma, self.diversity_best)
+    def name(self):
+        return "XNES-SA.{}".format(self.option)

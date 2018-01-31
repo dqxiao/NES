@@ -131,6 +131,7 @@ class PEPG:
     change_sigma = np.minimum(change_sigma, self.sigma)
     change_sigma = np.maximum(change_sigma, - 0.5 * self.sigma)
     self.sigma += change_sigma
+    #done 
     self.sigma[self.sigma > self.sigma_limit] *= self.sigma_decay
     
     if (self.learning_rate > self.learning_rate_limit):
@@ -147,3 +148,6 @@ class PEPG:
 
   def result(self): # return best params so far, along with historically best reward, curr reward, sigma
     return (self.best_mu, self.best_reward, self.curr_best_reward, self.sigma)
+
+  def name(self):
+    return "PEPG"
