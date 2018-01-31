@@ -165,17 +165,7 @@ class XNESVar:
     # simple obseravation based on the entropy
 
         self.diversity_best = self.diversity_base
-
-        # if self.rewardWindow.evident():
-        #     diversity_bound = -1*self.rewardWindow.lastDiff() \
-        #         / self.entropyWindow.lastDiff()  # be positive
-        #     self.diversity_best = min(self.diversity_best,
-        #             diversity_bound)
-        #     # self.diversity_best = max(0, self.diversity_best)
-        #     if self.rewardWindow.lastDiff() < -self.rewardWindow.std() \
-        #         or self.entropyWindow.lastDiff() > 0:
-        #         self.diversity_best = 0
-        # self.option =2 
+        #Variant narrow
         e_sigma = self.learning_rate * np.power(self.sigma,self.option)\
                 * self.diversity_best
         self.sigma = self.sigma * np.exp(dM) 

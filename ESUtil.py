@@ -79,3 +79,4 @@ class SlideWindow(object):
 def calEntropy(x):
     _x=np.log(x)
     return _x.sum()
+    

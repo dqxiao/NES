@@ -8,118 +8,11 @@ from torch.autograd import Variable
 
 from collections import namedtuple
 from PIL import Image
-import os
-import os.path
-import errno
-import codecs
-import copy
-
-from SimpleGA import * 
-from NoveltyGA import *
-from PEPG import *
-from model.NetworkModel import * 
-from ESUtil import * 
-from XNES import *
-from XNESVar import *
-from XNESSA import * 
-import pickle 
-
 import time 
-from RewardEvaluator import *
 import sys
 
 
-def pickle_write(data,method, fname):
-    pickle_out=open(method+fname+".pickle","wb")
-    pickle.dump(data,pickle_out)
-    pickle_out.close()
 
-
-def createNGA():
-
-	es= NoveltyGA(NPARAMS, 
-		popsize=NPOPULATION,
-		forget_best=False,
-		forget_history=False
-		)
-
-	return es 
-
-def createGA():
-	es = SimpleGA(NPARAMS,
-              popsize=NPOPULATION,
-              forget_best=False,
-              sigma_init=0.01,
-              sigma_decay=0.9999,
-              sigma_limit=0.01
-             )
-	return es
-
-
-def createPEPG():
-	es = PEPG(    NPARAMS,
-              popsize=NPOPULATION,
-              sigma_init=0.01,
-              sigma_decay=0.999,
-              sigma_alpha=0.2,
-              sigma_limit=0.01,
-              learning_rate=0.1,            # learning rate for standard deviation
-              learning_rate_decay = 0.9999, # annealing the learning rate
-              learning_rate_limit = 0.01,   # stop annealing learning rate
-              average_baseline=False
-             )
-	return es 
-
-
-def createXNES():
-	es = XNES(NPARAMS,
-              popsize=NPOPULATION,
-              sigma_init=0.01,
-              sigma_decay=0.999,
-              sigma_alpha=0.2,
-              sigma_limit=0.01,
-              learning_rate=0.01,            # learning rate for standard deviation
-              learning_rate_decay = 0.9999, # annealing the learning rate
-              learning_rate_limit = 0.01,   # stop annealing learning rate
-              average_baseline=False,
-             )
-	return es 
-
-
-def createXNESVar():
-	es = XNESVar(NPARAMS,
-              popsize=NPOPULATION,
-              sigma_init=0.01,
-              sigma_decay=0.999,
-              sigma_alpha=0.2,
-              sigma_limit=0.01,
-              learning_rate=0.1,            # learning rate for standard deviation
-              learning_rate_decay = 0.9999, # annealing the learning rate
-              learning_rate_limit = 0.01,   # stop annealing learning rate
-              average_baseline=False,
-              diversity_base= diversity_base, 
-              option=opt
-             )
-
-	return es 
-
-
-def createXNESSA():
-	es = XNESSA(NPARAMS,
-              popsize=NPOPULATION,
-              sigma_init=0.01,
-              sigma_decay=0.999,
-              sigma_alpha=0.2,
-              sigma_limit=0.01,
-              learning_rate=0.1,            # learning rate for standard deviation
-              learning_rate_decay = 0.9999, # annealing the learning rate
-              learning_rate_limit = 0.01,   # stop annealing learning rate
-              average_baseline=False,
-              diversity_base= diversity_base, 
-              option = opt
-             )
-
-	return es 
 
 def testRuns(training_log, trainLog=True):
 	best_valid_acc = 0
