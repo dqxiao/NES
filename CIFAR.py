@@ -178,7 +178,7 @@ if __name__=="__main__":
 	fname = "{}-{}-{}".format(args.optimizer,args.opt,args.diversity_base)
 	folder ="{}/{}/".format(datasetName,model.name())
 
-	testRuns(training_log)
+	# testRuns(training_log)
 	if not os.path.exists("./"+folder):
 		os.makedirs(folder)
 	pickle_write(np.array(training_log),folder+fname,"")
