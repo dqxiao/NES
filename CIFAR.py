@@ -63,7 +63,7 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 
 		if trainLog: 
 			resultLogs/=batch_idx
-			training_log.append([valid_acc,valid_loss,test_acc,test_loss]+list(resultLogs)) 
+			training_log.append([valid_acc,valid_loss,test_acc,test_loss]+list(resultLogs))
 
 		print('valid_acc', valid_acc * 100.)
 		if valid_acc >= best_valid_acc:
@@ -72,6 +72,7 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 			print('best valid_acc', best_valid_acc * 100.)
 
 	evaluate(best_model, test_loader, print_mode=True)
+
 
 
 def configRun():
@@ -143,8 +144,10 @@ if __name__=="__main__":
 	parser.add_argument('--cuda',default=False,type=bool,help='use cuda or not')
 	parser.add_argument('--epochs',default=100, type=int, help='the number of iteration')
 	parser.add_argument('--batch_size',default=100,type=int,help='batch size')
+	# parser.add_argument()
 	
 	args = parser.parse_args()
+
 
 	datasetName=cifar10Feed()
 	
@@ -152,6 +155,7 @@ if __name__=="__main__":
 	
 
 	model=VGG(args.model)
+	#done 
 	if args.cuda:
 		model.cuda()
 	NPARAMS,model_shapes=cal_nparams(model)
@@ -169,7 +173,8 @@ if __name__=="__main__":
 	esCreate={
 		"XNESVar": createXNESVar(ea),
 		"XNESSA": createXNESSA(ea),
-		"PEPG": createPEPG(ea)
+		"PEPG": createPEPG(ea),
+		"PEPGVar": createPEPGVar(ea)
 	}
 
 	es=esCreate[args.optimizer]
@@ -180,11 +185,13 @@ if __name__=="__main__":
 	print("with popsize:{}, db:{}, Opt:{}".format(NPOPULATION, args.diversity_base,args.opt))
 
 	training_log=[] 
-	
-	fname = "{}-{}-{}".format(args.optimizer,args.opt,args.diversity_base)
+	if args.popsize==0:
+		fname = "{}-{}-{}".format(args.optimizer,args.opt,args.diversity_base)
+	else:
+		fname = "BP-{}-{}-{}".format(args.optimizer,args.opt,args.diversity_base)
 	folder ="{}/{}/".format(datasetName,model.name())
 
-	# testRuns(training_log)
+	testRuns(training_log)
 	if not os.path.exists("./"+folder):
 		os.makedirs(folder)
 	pickle_write(np.array(training_log),folder+fname,"")
