@@ -3,104 +3,236 @@ import math
 import random
 import copy 
 import numpy as np 
+import torch.nn.functional as F
+from ESUtil import * 
 
-def compute_ranks(x):
-  """
-  Returns ranks in [0, len(x))
-  Note: This is different from scipy.stats.rankdata, which returns ranks in [1, len(x)].
-  (https://github.com/openai/evolution-strategies-starter/blob/master/es_distributed/es.py)
-  """
-  assert x.ndim == 1
-  ranks = np.empty(len(x), dtype=int)
-  ranks[x.argsort()] = np.arange(len(x))
-  return ranks
+
+
+
+
+def cal_nparams(model):
+    orig_params=[] 
+    model_shapes=[]
+
+    for param in model.parameters():
+        p = param.data.cpu().numpy()
+        model_shapes.append(p.shape)
+        orig_params.append(p.flatten())
+    orig_params_flat = np.concatenate(orig_params)
+    NPARAMS = len(orig_params_flat)
+
+    return int(NPARAMS), model_shapes
+
+
 
 
 class SGDS_ES():
     
-    def __init__(self, net,lr=0.001,momentum=0.99):
-        self.num_list=range(8)
-#        self.momentum_list=[]
-#        for i in range(3,11):
-#            self.momentum_list.append(1-1.0/(2**i))
+    def __init__(self,net,lr=0.001,momentum=0):
+        
         self.lr=lr
         self.momentum=momentum
-        self.V={}
+        self.popsize = 8
+        self.num_list=range(self.popsize)
+        self.num_params,self.model_shapes=cal_nparams(net)
+        self.sigma=0.001
+        self.mu = np.zeros(self.num_params)
+        #self.solutions =np.zeros((self.popsize,self.num_params))
+        #self.epsilon = np.random.randn(self.popsize, self.num_params)
+
+        # self.V=np.zeros((self.popsize,self.NPARAMS))
+        # self.V=np.random.randn(self.popsize,self.NPARAMS) * self.sigma 
         
-        for num in self.num_list:
-            self.V[num]={}
-            for name,parameters in net.named_parameters():
-                self.V[num][name]=(t.zeros_like(parameters.data))
-           
-   
+
+
+
+
+    
+    def updateModel(self,model,momentum):
+        idx =0 
+        i =0 
+        model_shapes=self.model_shapes
+    
+        for param in model.parameters():
+            delta = np.product(model_shapes[i])
+            block = momentum[idx:idx+delta]
+            block = np.reshape(block, model_shapes[i])
+            i += 1
+            idx += delta
+            block_data = t.from_numpy(block).float()
+            # if args.cuda:
+            #   block_data = block_data.cuda() # using cuda 
+            param.data -= block_data*self.lr 
+
+    def recoverModel(self,model,momentum):
+
+        idx =0 
+        i =0 
+        model_shapes=self.model_shapes
+        #
+        for param in model.parameters():
+            delta = np.product(model_shapes[i])
+            block = momentum[idx:idx+delta]
+            block = np.reshape(block, model_shapes[i])
+            i += 1
+            idx += delta
+            block_data = t.from_numpy(block).float() 
+            param.data=param.data+block_data*self.lr 
+
  
         
     
-    def step(self,net,inputs,labels,criterion,flag):
+    def step(self,net,data,target,base):
         loss_min=None
         lossnum=None
        
-        reward =np.zeros(8)
+        reward =np.zeros(self.popsize)
         # keep elite and remove 
         num_list=self.num_list
-        
+
+
+        grad=[]
+        for p in net.parameters():
+            p = p.grad.data.cpu().numpy()
+            grad.append(p.flatten()) #done 
+
+        gradFlat=np.concatenate(grad)
+
+        #solutions=self.solutions
+        self.epsilon = np.random.randn(self.popsize, self.num_params)
+        solutions=self.mu.reshape(1, self.num_params) + self.epsilon * self.sigma
+
+        #print(solutions.std())
+        val=0       
         for num in num_list:
-            for name,parameters in net.named_parameters():
-                
-                self.V[num][name]=self.momentum*self.V[num][name]+parameters.grad.data # update history 
-                parameters.data=parameters.data-self.V[num][name]*self.lr
-            
-            outputs=net(inputs)
-            loss=criterion(outputs,labels)
-            reward[num] = -1*(loss.data[0]) # larger reward means less loss 
-            
-            
-            if (loss_min is None) or (loss.data[0] < loss_min).all():
-                loss_min=loss.data
-                lossnum=num
-            for name,parameters in net.named_parameters():
-                parameters.data=parameters.data+self.V[num][name]*self.lr
-        
-        
-        #print(reward)  
-        def mate(a,b):
-            vsample=copy.copy(self.V[a])
-            for name,parameters in net.named_parameters():
-                
-                c=np.random.rand()>0.5 
-                if c:
-                    vsample[name]=self.V[b][name]
-            return vsample
-        
-        def mute(sample):
-            for name,parameters in net.named_parameters():
-                data=sample[name].cpu().numpy()
-                print(data.shape)
-                ep =np.random.randn(data.shape)*0.001
-                data +=ep 
-                sample[name]=torch.from_numpy(data).float()
-                
        
-        for name,parameters in net.named_parameters():
-            parameters.data=parameters.data-self.V[lossnum][name]*self.lr
-        elite_popsize=4
-        reward=np.array(reward) 
+            newH=self.momentum*solutions[num]+gradFlat #update moment
+            self.updateModel(net,newH)
+            output = net(data)
+            loss = F.nll_loss(output, target) 
+            reward[num] = -(loss.data[0])
+            
+            if (loss_min is None) or (loss.data[0] < loss_min):
+                loss_min=loss.data[0] # loss
+                lossnum=num
+
+            self.recoverModel(net,newH)
+            # if loss.data[0]>base:
+            #     val+=1 
+
+
+            #solutions[num]=newH
+
+            if loss.data[0]>base:
+                #print("kidding ---> <----")
+                if np.random.randn()>0.5:
+                    reward[num]=-1*base
+                else:
+                    solutions[num]=newH
+            else:
+                #val+=1
+                solutions[num]=newH
+
+            # if loss.data[0]<base:
+            #     if np.random.randn()>0.9:
+            #         solutions[num]=newH
+            #     else:
+            #         reward[num]=-1*loss.data[0]
+            # else:
+            #     if np.random.randn()>0.1:
+            #         solutions[num]=newH
+
+            # solutions[num]=newH
+
+        #moving to the next step
+        # print("percent:{}".format(float(val)/8)) 
+
+        self.updateModel(net,solutions[lossnum])
         
-        print(reward.std())
-        elite_size=idx = np.argsort(reward)[::-1][0:elite_popsize]  
-        elite_params=[]
-        for item in elite_size:
-            elite_params.append(self.V[item])  
-        elite_reward=reward[elite_size]
+        def mate(a,b):
+
+            c=copy.copy(a)
+            idx = np.where(np.random.rand((c.size)) > 0.5)
+            c[idx] = b[idx]
+            return c
+
         
-        elite_range=[item for item in range(elite_popsize)]
-        popsize=8-elite_popsize
+       
+        _std=reward.std()
+        idx = np.argsort(reward)[::-1] 
+        best_reward = reward[idx[0]]
+        # print("{}{}".format(lossnum,idx[0]))
+        # best_mu = solutions[idx[0]]
+        # #
+        # # reward = compute_centered_ranks(reward)
+        # # l2_decay = compute_weight_decay(0.1, solutions)
+        # # reward += l2_decay
+
+        epsilon=solutions-self.mu*self.momentum-gradFlat
+        # if _std==0:
+        if _std==0:
+            _std=0.000000000001 
+            self.sigma*=0.9999
+            # sigma*=0.99 #done 
+        normalized_reward = (reward - np.mean(reward))/ _std
+        deleta_Mu=0.001/(self.popsize*self.sigma)*np.dot(epsilon.T, normalized_reward)
+        self.mu =(self.momentum*self.mu)+gradFlat+deleta_Mu
+        #done 
+        # self.mu=self.mu*self.momentum+gradFlat
+        # self.sigma *=0.9999
+
+        #self.mu=solutions[lossnum]
+        # self.mu=solutions[lossnum] # the best one 
+
+        # if self.sigma> 0.00001:
+        # self.sigma*=0.99
+
+        # self.mu+=gradFlat
+
+        # h=solutions[lossnum]*self.momentum+gradFlat
+        # self.updateModel(net,h)
+        # others=np.argsort(reward)[::-1][elite_popsize:]
+        # 
+        # # reward = compute_centered_ranks(reward)
+        # # l2_decay = compute_weight_decay(0.1, self.V)
+        # # reward += l2_decay
+        # # reward
+        # elite_popsize=3
+        # elite_idx=np.argsort(reward)[::-1][0:elite_popsize]  
+        # other_idx=np.argsort(reward)[::-1][elite_popsize:]
+      
+        # elite_reward=reward[elite_idx] 
+
+        # popsize=8-elite_popsize
+        # choices=np.random.choice(num_list,2*popsize,list(reward))
+        # crossOver=[mate(solutions[choices[2*i]],solutions[choices[2*i+1]]) for i in range(popsize)]
+        # crossOver=np.array(crossOver)
+
+        # solutions[other_idx]=crossOver
+        # if _std==0:
+        #     solutions+=np.random.randn(self.popsize, self.num_params)*self.sigma
+        #     self.sigma*=0.999
+        #self.mu=np.mean(solutions,axis=0)
+
+
+
+
+
+
+      
+        # # # #print(self.V[0].shape)
+        # self.V[others]=solutions #update the remaing ones 
+        # # if reward.std()>0.0001:
+        # self.sigma*=0.9999
+        # # if _std==0.0:
+        # #     self.lr*=0.99
+        # # else:
+        # #     self.sigma=0.0001
+        # # self.V=solutions
+        # # self.updateModel(net,np.mean(self.V,axis=0))
+        return best_reward,_std
         
-        choices=np.random.choice(elite_range,2*popsize,list(elite_reward))
-        solutions=[mate(choices[2*i],choices[2*i+1]) for i in range(popsize)] #cross-over 
-        _=[mute(s) for s in solutions]
+
         
-        elite_params+=solutions
-        
-        for idx, num in enumerate(num_list):
-            self.V[num]=elite_params[idx]
+
+
