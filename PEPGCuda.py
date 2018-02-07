@@ -83,12 +83,12 @@ class PEPGCuda:
         return solutions
 
     def tell(self, reward_table_result):
-        reward_table = reward_table_result 
+         reward_table = reward_table_result 
         reward_offset = 1
         if self.rank_fitness:
-            reward_table = torch_compute_centered_ranks(reward_table,True)
-            reward_table.cuda()
+            reward_table = torch_compute_centered_ranks(reward_table,False)
 
+        #done 
         if self.average_baseline:
             b = torch.mean(reward_table)
             reward_offset = 0
@@ -96,8 +96,38 @@ class PEPGCuda:
             b = reward_table[0] # baseline
 
         reward = reward_table[reward_offset:]
+        y,idx =  torch.sort(reward,0)
+        idx = reverse(idx)
+
+        # print(idx.type())
+        idx = idx.type(torch.LongTensor)
+
+        best_reward = reward[idx[0]]
+        # print(best_reward)
         # print(reward_table.type())
-        # print(reward.type())
+        #print("self.mu:{}".format(self.mu.size()))
+
+        if (best_reward > b or self.average_baseline):
+            best_mu = self.mu + self.epsilon_full[idx[0]]
+            best_reward = reward[idx[0]]
+        else:
+            best_mu = self.mu
+            best_reward = b
+
+        self.curr_best_reward = best_reward
+        self.curr_best_mu = best_mu
+
+        #print("generate:{}".format(self.curr_best_mu.size()))
+
+        if self.first_interation:
+            self.first_interation = False
+            self.best_reward = self.curr_best_reward
+            self.best_mu = best_mu
+        else:
+          if self.forget_best or (self.curr_best_reward > self.best_reward):
+            self.best_mu = best_mu
+            self.best_reward = self.curr_best_reward
+        
         stdev_reward = reward.std()
         epsilon = self.epsilon
         sigma = self.sigma
@@ -136,7 +166,7 @@ class PEPGCuda:
 
         if (self.learning_rate > self.learning_rate_limit):
           self.learning_rate *= self.learning_rate_decay
-        
+
     def done(self):
         return (self.rms_stdev() < self.done_threshold)
 
