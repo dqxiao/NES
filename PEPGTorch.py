@@ -105,7 +105,7 @@ class PEPGTorch:
         best_reward = reward[idx[0]]
         # print(best_reward)
         # print(reward_table.type())
-        print("self.mu:{}".format(self.mu.size()))
+        #print("self.mu:{}".format(self.mu.size()))
 
         if (best_reward > b or self.average_baseline):
             best_mu = self.mu + self.epsilon_full[idx[0]]
@@ -117,7 +117,7 @@ class PEPGTorch:
         self.curr_best_reward = best_reward
         self.curr_best_mu = best_mu
 
-        print("generate:{}".format(self.curr_best_mu.size()))
+        #print("generate:{}".format(self.curr_best_mu.size()))
 
         if self.first_interation:
             self.first_interation = False
@@ -161,7 +161,7 @@ class PEPGTorch:
         change_sigma = torch.max(change_sigma, - 0.5 * self.sigma)
         #print(change_sigma)
         # self.sigma.add_(change_sigma)
-        self.sigma = self.sigma+ change_sigma
+        self.sigma = self.sigma+ change_sigma.view(self.sigma.size())
 
         #     print(self.sigma)
         self.sigma[self.sigma > self.sigma_limit] *= self.sigma_decay
