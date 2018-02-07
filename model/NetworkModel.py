@@ -65,7 +65,7 @@ def cal_nparams(model):
 def update_model(flat_param, model, model_shapes):
   idx = 0
   i = 0
-  #print(flat_param.size())
+  print(flat_param.size())
   for param in model.parameters():
     delta = np.product(model_shapes[i])
     block = flat_param[idx:idx+delta]
