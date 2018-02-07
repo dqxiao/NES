@@ -2,20 +2,20 @@ import numpy as np
 from sklearn.neighbors import NearestNeighbors
 import torch 
 
-def torch_compute_ranks(x,cudaFlag=False):
+def torch_compute_ranks(x):
 
   y,idx=torch.sort(x,0)
   idx =idx.type(torch.LongTensor)
   size = x.size()[0]
   ranks = torch.zeros(x.size())
-  if cudaFlag:
-    ranks.cuda()
   ranks[idx] = torch.range(0,size-1)
   return ranks 
 
 
-def torch_compute_centered_ranks(x):
+def torch_compute_centered_ranks(x,cudaFlag=False):
   y=torch_compute_ranks(x).float()
+  if cudaFlag:
+    y.cuda()
   size = x.size()[0]
   y /=size-1
   y -=0.5 
