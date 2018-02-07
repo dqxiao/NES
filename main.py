@@ -75,11 +75,11 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 		# 	# resultLogs/=batch_idx  
 		# 	training_log.append([valid_acc,valid_loss,test_acc,test_loss])
 
-		print('valid_acc', valid_acc * 100.)
-		if valid_acc >= best_valid_acc:
-			best_valid_acc = valid_acc
-			best_model = copy.deepcopy(model)
-			print('best valid_acc', best_valid_acc * 100.)
+		# print('valid_acc', valid_acc * 100.)
+		# if valid_acc >= best_valid_acc:
+		# 	best_valid_acc = valid_acc
+		# 	best_model = copy.deepcopy(model)
+		# 	print('best valid_acc', best_valid_acc * 100.)
 
 	evaluate(best_model, test_loader, print_mode=True,cuda=args.cuda)
 
