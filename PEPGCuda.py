@@ -83,7 +83,7 @@ class PEPGCuda:
         return solutions
 
     def tell(self, reward_table_result):
-         reward_table = reward_table_result 
+        reward_table = reward_table_result 
         reward_offset = 1
         if self.rank_fitness:
             reward_table = torch_compute_centered_ranks(reward_table,False)
@@ -127,7 +127,7 @@ class PEPGCuda:
           if self.forget_best or (self.curr_best_reward > self.best_reward):
             self.best_mu = best_mu
             self.best_reward = self.curr_best_reward
-        
+
         stdev_reward = reward.std()
         epsilon = self.epsilon
         sigma = self.sigma
