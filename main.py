@@ -50,22 +50,22 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 				#reward[i] = - loss.data[0]
 				pop_loss += loss.data[0]
 			best_raw_reward = reward.max()
-		# 	pop_loss/=es.popsize
-		# 	running_loss+= pop_loss
-		# 	# if rewardShaping:
-		# 	# 	reward = compute_centered_ranks(reward)
-		# 	# 	l2_decay = compute_weight_decay(weight_decay_coef, solutions)
-		# 	# 	reward += l2_decay
-		# 	es.tell(reward)
-		# 	result = es.result()
+			pop_loss/=es.popsize
+			running_loss+= pop_loss
+			# if rewardShaping:
+			# 	reward = compute_centered_ranks(reward)
+			# 	l2_decay = compute_weight_decay(weight_decay_coef, solutions)
+			# 	reward += l2_decay
+			es.tell(reward)
+			result = es.result()
 		# 	#tempLog=np.array([abs(result[1]),abs(reward.mean()),calEntropy(result[3]),abs(reward.std()),result[-1]])
 		# 	#resultLogs+=tempLog
 
 
 			if (batch_idx % 50 == 0):
 				print(epoch, batch_idx)	    
-		# 	curr_solution = es.current_param()
-		# 	update_model(curr_solution, model, model_shapes)
+			# curr_solution = es.current_param()
+			# update_model(curr_solution, model, model_shapes)
 		# running_loss/=batch_idx
 		# print("{}\{}".format(epoch,running_loss))
 		# valid_acc,valid_loss = evaluate(model,valid_loader, print_mode=False,cuda=args.cuda)
