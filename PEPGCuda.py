@@ -1,5 +1,5 @@
 from ESUtil import * 
-import torch 
+import torch.cuda as torch 
 
 class PEPGCuda:
     def __init__(self, num_params,             # number of model parameters
@@ -38,11 +38,11 @@ class PEPGCuda:
         #
 
 
-        self.batch_reward = torch.zeros(self.batch_size*2).cuda()
-        self.mu = torch.zeros(self.num_params).cuda()
-        self.sigma = torch.ones(self.num_params).mul_(self.sigma_init).cuda()
-        self.curr_best_mu = torch.zeros(self.num_params).cuda()
-        self.best_mu = torch.zeros(self.num_params).cuda()
+        self.batch_reward = torch.zeros(self.batch_size*2).
+        self.mu = torch.zeros(self.num_params).
+        self.sigma = torch.ones(self.num_params).mul_(self.sigma_init)
+        self.curr_best_mu = torch.zeros(self.num_params)
+        self.best_mu = torch.zeros(self.num_params)
         self.best_reward = 0
         self.first_interation = True
         self.weight_decay = weight_decay
@@ -60,14 +60,15 @@ class PEPGCuda:
         '''returns a list of parameters'''
     # antithetic sampling
     # self.epsilon = np.random.randn(self.batch_size, self.num_params) * self.sigma.reshape(1, self.num_params)
-        self.epsilon = torch.randn(self.batch_size,self.num_params).cuda()
-        self.epsilon.mul_(self.sigma.expand(self.batch_size,self.num_params)).cuda() 
-        self.epsilon_full = torch.cat((self.epsilon, -1*self.epsilon)).cuda()
+        #self.epsilon = torch.randn(self.batch_size,self.num_params).cuda()
+        self.epsilon = torch.FloatTensor(self.batch_size,self.num_params) # thansk 
+        self.epsilon.mul_(self.sigma.expand(self.batch_size,self.num_params))
+        self.epsilon_full = torch.cat((self.epsilon, -1*self.epsilon)).
         
         if self.average_baseline:
             epsilon = self.epsilon_full
         else:
-            epsilon = torch.cat((torch.zeros(1,self.num_params).cuda(),self.epsilon_full)) 
+            epsilon = torch.cat((torch.zeros(1,self.num_params),self.epsilon_full)) 
         solutions = self.mu.expand(epsilon.size())+epsilon
         self.solutions = solutions
         #print(epsilon)
