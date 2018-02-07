@@ -1,5 +1,6 @@
 from ESUtil import * 
 import torch.cuda as torch_c
+import torch 
 
 class PEPGCuda:
     def __init__(self, num_params,             # number of model parameters
@@ -38,11 +39,17 @@ class PEPGCuda:
         #
 
 
-        self.batch_reward = torch_c.zeros(self.batch_size*2)
-        self.mu = torch_c.zeros(self.num_params)
-        self.sigma = torch_c.ones(self.num_params).mul_(self.sigma_init)
-        self.curr_best_mu = torch_c.zeros(self.num_params)
-        self.best_mu = torch_c.zeros(self.num_params)
+        # self.batch_reward = torch.zeros(self.batch_size*2).cuda()
+        # self.mu = torch.zeros(self.num_params).cuda()
+        # self.sigma = torch.ones(self.num_params).mul_(self.sigma_init).cuda()
+        # self.curr_best_mu = torch.zeros(self.num_params).cuda()
+        # self.best_mu = torch.zeros(self.num_params).cuda()
+        self.batch_reward = torch_c.FloatTensor(self.batch_size*2).fill_(0.0)
+        self.mu = torch_c.FloatTensor(self.num_params).fill_(0.0)
+        self.sigma = torch_c.FloatTensor(self.num_params).fill_(self.sigma_init)
+        self.curr_best_mu = torch_c.FloatTensor(self.num_params).fill_(0.0)
+        self.best_mu = torch_c.FloatTensor(self.num_params).fill_(0.0)
+
         self.best_reward = 0
         self.first_interation = True
         self.weight_decay = weight_decay
@@ -61,14 +68,15 @@ class PEPGCuda:
     # antithetic sampling
     # self.epsilon = np.random.randn(self.batch_size, self.num_params) * self.sigma.reshape(1, self.num_params)
         #self.epsilon = torch.randn(self.batch_size,self.num_params).cuda()
-        self.epsilon = torch_c.FloatTensor(self.batch_size,self.num_params) # thanks
+        self.epsilon = torch_c.FloatTensor(self.batch_size,self.num_params).uniform_()
         self.epsilon.mul_(self.sigma.expand(self.batch_size,self.num_params))
         self.epsilon_full = torch_c.cat((self.epsilon, -1*self.epsilon))
         
         if self.average_baseline:
             epsilon = self.epsilon_full
         else:
-            epsilon = torch_c.cat((torch_c.zeros(1,self.num_params),self.epsilon_full)) 
+            zeros = torch_c.FloatTensor(1, self.num_params).fill_(0.0)
+            epsilon = torch_c.cat((zeros,self.epsilon_full)) 
         solutions = self.mu.expand(epsilon.size())+epsilon
         self.solutions = solutions
         #print(epsilon)
