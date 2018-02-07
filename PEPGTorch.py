@@ -1,6 +1,14 @@
 from ESUtil import * 
 import torch 
 
+
+def reverse(tensor):
+    idx = [i for i in range(tensor.size(0)-1, -1, -1)]
+    idx = torch.LongTensor(idx)
+    inverted_tensor = tensor.index_select(0, idx)
+    return inverted_tensor
+
+
 class PEPGTorch:
     def __init__(self, num_params,             # number of model parameters
                sigma_init=0.10,              # initial standard deviation
@@ -89,11 +97,15 @@ class PEPGTorch:
         reward = reward_table[reward_offset:]
         #idx = np.argsort(reward)[::-1]
         y,idx =  torch.sort(reward,0)
+        idx = reverse(idx)
 
         # print(idx.type())
         idx = idx.type(torch.LongTensor)
 
         best_reward = reward[idx[0]]
+        #print(best_reward)
+        #print(b)
+
         if (best_reward > b or self.average_baseline):
             best_mu = self.mu + self.epsilon_full[idx[0]]
             best_reward = reward[idx[0]]
@@ -146,7 +158,7 @@ class PEPGTorch:
         #print(change_sigma)
         # self.sigma.add_(change_sigma)
         self.sigma = self.sigma+ change_sigma
-        
+
         #     print(self.sigma)
         self.sigma[self.sigma > self.sigma_limit] *= self.sigma_decay
 

@@ -87,7 +87,7 @@ class PEPGCuda:
         reward_offset = 1
         if self.rank_fitness:
             reward_table = torch_compute_centered_ranks(reward_table)
-        
+
         if self.average_baseline:
             b = torch.mean(reward_table)
             reward_offset = 0
@@ -96,7 +96,8 @@ class PEPGCuda:
 
         reward = reward_table[reward_offset:]
         # idx = np.argsort(reward)[::-1]
-        y,idx =  torch.sort(reward,0)[::-1] 
+        y,idx =  torch.sort(reward,0)
+        
         # print(idx.type())
         idx = idx.type(torch.LongTensor)
 
