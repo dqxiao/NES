@@ -85,6 +85,9 @@ class PEPGCuda:
     def tell(self, reward_table_result):
         reward_table = reward_table_result 
         reward_offset = 1
+        if self.rank_fitness:
+            reward_table = torch_compute_centered_ranks(reward_table)
+        
         if self.average_baseline:
             b = torch.mean(reward_table)
             reward_offset = 0
