@@ -184,7 +184,7 @@ if __name__=="__main__":
 		NPOPULATION = args.popsize
 
 	ea=ESArgs(NPARAMS=NPARAMS, NPOPULATION=NPOPULATION,diversity_base=args.diversity_base, opt=args.opt,lr=args.lr) 
-	if args.cuda():
+	if args.cuda:
 		es = createPEPGCuda(ea)
 	else:
 		esCreate={
