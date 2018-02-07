@@ -147,8 +147,8 @@ class PEPGTorch:
         #rT =torch.from_numpy(rT).float().view(1,self.batch_size)
         rT = rT.view(1,self.batch_size)
         change_mu = self.learning_rate * torch.mm(rT,epsilon)
-        print(change_mu.size())
-        self.mu =self.mu + change_mu
+        #print(change_mu.size())
+        self.mu =self.mu + change_mu.view(self.mu.size())
         
         # print(torch.sum(change_mu))
         # self.mu.add_(change_mu)  
