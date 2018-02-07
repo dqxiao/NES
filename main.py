@@ -42,14 +42,14 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 				reward=reward.cuda()
 
 			pop_loss =0.0 
-			# for i in range(es.popsize):
-			# 	update_model(solutions[i], model, model_shapes)
-		# 		output = model(data)
-		# 		loss = F.nll_loss(output, target) # loss function
-		# 		reward[i] = -loss.data[0]              # get the value 
-		# 		#reward[i] = - loss.data[0]
-		# 		pop_loss += loss.data[0]
-		# 	best_raw_reward = reward.max()
+			for i in range(es.popsize):
+				update_model(solutions[i], model, model_shapes)
+				output = model(data)
+				loss = F.nll_loss(output, target) # loss function
+				reward[i] = -loss.data[0]              # get the value 
+				#reward[i] = - loss.data[0]
+				pop_loss += loss.data[0]
+			best_raw_reward = reward.max()
 		# 	pop_loss/=es.popsize
 		# 	running_loss+= pop_loss
 		# 	# if rewardShaping:
