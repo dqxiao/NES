@@ -1,5 +1,5 @@
 from ESUtil import * 
-import torch.cuda as torch 
+import torch.cuda as torch_c
 
 class PEPGCuda:
     def __init__(self, num_params,             # number of model parameters
@@ -38,11 +38,11 @@ class PEPGCuda:
         #
 
 
-        self.batch_reward = torch.zeros(self.batch_size*2)
-        self.mu = torch.zeros(self.num_params)
-        self.sigma = torch.ones(self.num_params).mul_(self.sigma_init)
-        self.curr_best_mu = torch.zeros(self.num_params)
-        self.best_mu = torch.zeros(self.num_params)
+        self.batch_reward = torch_c.zeros(self.batch_size*2)
+        self.mu = torch_c.zeros(self.num_params)
+        self.sigma = torch_c.ones(self.num_params).mul_(self.sigma_init)
+        self.curr_best_mu = torch_c.zeros(self.num_params)
+        self.best_mu = torch_c.zeros(self.num_params)
         self.best_reward = 0
         self.first_interation = True
         self.weight_decay = weight_decay
@@ -53,7 +53,7 @@ class PEPGCuda:
 
     def rms_stdev(self):
         sigma = self.sigma 
-        return torch.mean(torch.sqrt(sigma*sigma)) 
+        return torch_c.mean(torch_c.sqrt(sigma*sigma)) 
     
 
     def ask(self):
@@ -61,14 +61,14 @@ class PEPGCuda:
     # antithetic sampling
     # self.epsilon = np.random.randn(self.batch_size, self.num_params) * self.sigma.reshape(1, self.num_params)
         #self.epsilon = torch.randn(self.batch_size,self.num_params).cuda()
-        self.epsilon = torch.FloatTensor(self.batch_size,self.num_params) # thanks
+        self.epsilon = torch_c.FloatTensor(self.batch_size,self.num_params) # thanks
         self.epsilon.mul_(self.sigma.expand(self.batch_size,self.num_params))
-        self.epsilon_full = torch.cat((self.epsilon, -1*self.epsilon))
+        self.epsilon_full = torch_c.cat((self.epsilon, -1*self.epsilon))
         
         if self.average_baseline:
             epsilon = self.epsilon_full
         else:
-            epsilon = torch.cat((torch.zeros(1,self.num_params),self.epsilon_full)) 
+            epsilon = torch_c.cat((torch_c.zeros(1,self.num_params),self.epsilon_full)) 
         solutions = self.mu.expand(epsilon.size())+epsilon
         self.solutions = solutions
         #print(epsilon)
@@ -118,12 +118,12 @@ class PEPGCuda:
         reward_avg = (reward[:self.batch_size] + reward[self.batch_size:]) / 2.0
         rS = reward_avg - b
         rS = rS.view(1,self.batch_size)
-        delta_sigma = torch.mm(rS,S) / (2 * self.batch_size * stdev_reward)
+        delta_sigma = torch_c.mm(rS,S) / (2 * self.batch_size * stdev_reward)
 
         #     # move mean to the average of the best idx means
         rT = (reward[:self.batch_size] - reward[self.batch_size:])
         rT = rT.view(1,self.batch_size)
-        change_mu = self.learning_rate * torch.mm(rT,epsilon)
+        change_mu = self.learning_rate * torch_c.mm(rT,epsilon)
         # print(torch.sum(change_mu))
         self.mu.add_(change_mu)  
 
@@ -131,8 +131,8 @@ class PEPGCuda:
 
         #     # adjust sigma according to the adaptive sigma calculation
         change_sigma = self.sigma_alpha * delta_sigma
-        change_sigma = torch.min(change_sigma, self.sigma)
-        change_sigma = torch.max(change_sigma, - 0.5 * self.sigma)
+        change_sigma = torch_c.min(change_sigma, self.sigma)
+        change_sigma = torch_c.max(change_sigma, - 0.5 * self.sigma)
         #print(change_sigma)
         self.sigma.add_(change_sigma)
         #     print(self.sigma)
