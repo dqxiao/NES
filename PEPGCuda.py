@@ -86,7 +86,7 @@ class PEPGCuda:
         reward_table = reward_table_result 
         reward_offset = 1
         if self.rank_fitness:
-            reward_table = torch_compute_centered_ranks(reward_table,cudaFlag=True)
+            reward_table = torch_compute_centered_ranks(reward_table,True)
             #reward_table.cuda()
 
         if self.average_baseline:

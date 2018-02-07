@@ -12,7 +12,7 @@ def torch_compute_ranks(x):
   return ranks 
 
 
-def torch_compute_centered_ranks(x,cudaFlag=False):
+def torch_compute_centered_ranks(x,cudaFlag):
   y=torch_compute_ranks(x).float()
   if cudaFlag:
     y.cuda()
