@@ -63,9 +63,9 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 
 
 			if (batch_idx % 50 == 0):
-				print(epoch, batch_idx)	    
-			# curr_solution = es.current_param()
-			# update_model(curr_solution, model, model_shapes)
+				print(epoch, batch_idx,best_raw_reward)	    
+			curr_solution = es.current_param()
+			update_model(curr_solution, model, model_shapes)
 		# running_loss/=batch_idx
 		# print("{}\{}".format(epoch,running_loss))
 		valid_acc,valid_loss = evaluate(model,valid_loader, print_mode=False,cuda=args.cuda)
