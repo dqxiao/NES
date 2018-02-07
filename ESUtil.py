@@ -24,7 +24,10 @@ def torch_compute_centered_ranks(x,cudaFlag):
 
 def reverse(tensor):
     idx = [i for i in range(tensor.size(0)-1, -1, -1)]
+
     idx = torch.LongTensor(idx)
+    if "cuda" in tensor.type():
+      idx = idx.cuda()
     inverted_tensor = tensor.index_select(0, idx)
     return inverted_tensor
     

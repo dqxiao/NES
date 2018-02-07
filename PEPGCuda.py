@@ -96,9 +96,10 @@ class PEPGCuda:
             b = reward_table[0] # baseline
 
         reward = reward_table[reward_offset:]
-        print(reward_table.type())
-        print(reward.type())
+        # print(reward_table.type())
+        # print(reward.type())
         y,idx =  torch.sort(reward,0)
+        #
         idx = reverse(idx)
         idx = idx.type(torch.LongTensor)
 
