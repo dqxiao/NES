@@ -4,7 +4,6 @@ import torch.nn.functional as F
 import numpy as np 
 from torch.autograd import Variable
 
-
 class MLPNet(nn.Module):
     def __init__(self):
         super(MLPNet, self).__init__()
@@ -69,12 +68,15 @@ def update_model(flat_param, model, model_shapes):
   for param in model.parameters():
     delta = np.product(model_shapes[i])
     block = flat_param[idx:idx+delta]
-    block = np.reshape(block, model_shapes[i])
-    i += 1
+    # #block = np.reshape(block, model_shapes[i])
+    # i += 1
+    # idx += delta
+    # block_data = torch.from_numpy(block).float()
+    # param.data = block_data
+    i += 1 
     idx += delta
-    block_data = torch.from_numpy(block).float()
-    param.data = block_data
-
+    block = block.view(param.data.size())
+    param.data= block
 
 def evaluate_anchor(model, test_loader,return_log=True):
 

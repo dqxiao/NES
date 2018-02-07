@@ -44,10 +44,10 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 				loss = F.nll_loss(output, target) # loss function
 				reward[i] = - loss.data[0]
 			best_raw_reward = reward.max()
-			if rewardShaping:
-				reward = compute_centered_ranks(reward)
-				l2_decay = compute_weight_decay(weight_decay_coef, solutions)
-				reward += l2_decay
+			# if rewardShaping:
+			# 	reward = compute_centered_ranks(reward)
+			# 	l2_decay = compute_weight_decay(weight_decay_coef, solutions)
+			# 	reward += l2_decay
 			es.tell(reward)
 			result = es.result()
 			tempLog=np.array([abs(result[1]),abs(reward.mean()),calEntropy(result[3]),abs(reward.std()),result[-1]])

@@ -7,6 +7,7 @@ from SimpleGA import *
 from NoveltyGA import * 
 from collections import namedtuple
 from PEPGVar import * 
+from PEPGTorch import * 
 
 ESArgs = namedtuple('esArgs', ['NPARAMS', 'NPOPULATION','diversity_base','opt','lr'])
 
@@ -33,7 +34,7 @@ def createGA(ea):
 
 
 def createPEPG(ea):
-	es = PEPG(ea.NPARAMS,
+	es = PEPGTorch(ea.NPARAMS,
               popsize=ea.NPOPULATION,
               sigma_init=0.01,
               sigma_decay=0.999,
