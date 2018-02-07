@@ -28,7 +28,7 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 	for epoch in range(1, args.epochs + 1):
 	# train loop
 		model.eval()
-		resultLogs=np.zeros(5)
+		# resultLogs=np.zeros(5)
 		running_loss =0.0 
 		for batch_idx, (data, target) in enumerate(train_loader):
 			if args.cuda:
@@ -38,6 +38,8 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 
 			solutions = es.ask() 
 			reward = torch.zeros(es.popsize)
+			if args.cuda:
+				reward=reward.cuda()
 
 			pop_loss =0.0 
 			for i in range(es.popsize):
