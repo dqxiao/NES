@@ -184,14 +184,17 @@ if __name__=="__main__":
 		NPOPULATION = args.popsize
 
 	ea=ESArgs(NPARAMS=NPARAMS, NPOPULATION=NPOPULATION,diversity_base=args.diversity_base, opt=args.opt,lr=args.lr) 
-	esCreate={
-		"XNESVar": createXNESVar(ea),
-		"XNESSA": createXNESSA(ea),
-		"PEPG": createPEPG(ea),
-		"PEPGVar": createPEPGVar(ea)
-	}
+	if args.cuda():
+		es = createPEPGCuda(ea)
+	else:
+		esCreate={
+			"XNESVar": createXNESVar(ea),
+			"XNESSA": createXNESSA(ea),
+			"PEPG": createPEPG(ea),
+			"PEPGVar": createPEPGVar(ea)
+		}
 
-	es=esCreate[args.optimizer]
+		es=esCreate[args.optimizer]
 
 
 
