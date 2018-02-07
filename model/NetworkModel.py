@@ -75,7 +75,7 @@ def update_model(flat_param, model, model_shapes):
     # param.data = block_data
     i += 1 
     idx += delta
-    block = block.view(param.data.size())
+    block = block.view(param.size())
     param.data= block
 
 def evaluate_anchor(model, test_loader,return_log=True):
