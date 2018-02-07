@@ -103,8 +103,9 @@ class PEPGTorch:
         idx = idx.type(torch.LongTensor)
 
         best_reward = reward[idx[0]]
-        print(best_reward)
-        print(reward_table.type())
+        # print(best_reward)
+        # print(reward_table.type())
+        print("self.mu:{}".format(self.mu.size()))
 
         if (best_reward > b or self.average_baseline):
             best_mu = self.mu + self.epsilon_full[idx[0]]
