@@ -61,9 +61,9 @@ class PEPGCuda:
     # antithetic sampling
     # self.epsilon = np.random.randn(self.batch_size, self.num_params) * self.sigma.reshape(1, self.num_params)
         #self.epsilon = torch.randn(self.batch_size,self.num_params).cuda()
-        self.epsilon = torch.FloatTensor(self.batch_size,self.num_params) # thansk 
+        self.epsilon = torch.FloatTensor(self.batch_size,self.num_params) # thanks
         self.epsilon.mul_(self.sigma.expand(self.batch_size,self.num_params))
-        self.epsilon_full = torch.cat((self.epsilon, -1*self.epsilon)).
+        self.epsilon_full = torch.cat((self.epsilon, -1*self.epsilon))
         
         if self.average_baseline:
             epsilon = self.epsilon_full
