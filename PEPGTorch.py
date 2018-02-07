@@ -144,7 +144,9 @@ class PEPGTorch:
         change_sigma = torch.min(change_sigma, self.sigma)
         change_sigma = torch.max(change_sigma, - 0.5 * self.sigma)
         #print(change_sigma)
-        self.sigma.add_(change_sigma)
+        # self.sigma.add_(change_sigma)
+        self.sigma = self.sigma+ change_sigma
+        
         #     print(self.sigma)
         self.sigma[self.sigma > self.sigma_limit] *= self.sigma_decay
 
