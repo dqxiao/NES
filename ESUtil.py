@@ -5,6 +5,7 @@ import torch
 def torch_compute_ranks(x):
 
   y,idx=torch.sort(x,0)
+  idx =idx.type(torch.LongTensor)
   size = x.size()[0]
   ranks = torch.zeros(x.size())
   ranks[idx] = torch.range(0,size-1)
