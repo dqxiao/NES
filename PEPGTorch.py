@@ -87,10 +87,11 @@ class PEPGTorch:
             b = reward_table[0] # baseline
 
         reward = reward_table[reward_offset:]
-        idx = np.argsort(reward)[::-1]
-        # y,idx =  torch.sort(reward,0)[::-1] 
+        #idx = np.argsort(reward)[::-1]
+        y,idx =  torch.sort(reward,0)
+
         # print(idx.type())
-        #idx = idx.type(torch.LongTensor)
+        idx = idx.type(torch.LongTensor)
 
         best_reward = reward[idx[0]]
         if (best_reward > b or self.average_baseline):
