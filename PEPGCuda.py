@@ -38,7 +38,7 @@ class PEPGCuda:
         #
 
 
-        self.batch_reward = torch.zeros(self.batch_size*2).
+        self.batch_reward = torch.zeros(self.batch_size*2)
         self.mu = torch.zeros(self.num_params).
         self.sigma = torch.ones(self.num_params).mul_(self.sigma_init)
         self.curr_best_mu = torch.zeros(self.num_params)
