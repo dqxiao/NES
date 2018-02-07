@@ -98,48 +98,28 @@ class PEPGCuda:
         reward = reward_table[reward_offset:]
         # print(reward_table.type())
         # print(reward.type())
-        y,idx =  torch.sort(reward,0)
-        #
-        idx = reverse(idx)
-        idx = idx.type(torch.LongTensor)
-
-        best_reward = reward[idx[0]]
-        if (best_reward > b or self.average_baseline):
-            best_mu = self.mu + self.epsilon_full[idx[0]]
-            best_reward = reward[idx[0]]
-        else:
-            best_mu = self.mu
-            best_reward = b
-
-        self.curr_best_reward = best_reward
-        self.curr_best_mu = best_mu
-
-        if self.first_interation:
-            self.first_interation = False
-            self.best_reward = self.curr_best_reward
-            self.best_mu = best_mu
-        else:
-          if self.forget_best or (self.curr_best_reward > self.best_reward):
-            self.best_mu = best_mu
-            self.best_reward = self.curr_best_reward
-
-        # adaptive sigma
-        # normalization
         stdev_reward = reward.std()
         epsilon = self.epsilon
         sigma = self.sigma
-        S = ((epsilon * epsilon - (sigma * sigma).expand(epsilon.size())) / sigma.expand(epsilon.size())) 
+        S = ((epsilon * epsilon - (sigma * sigma).expand(epsilon.size())) / sigma.expand(epsilon.size()))
         reward_avg = (reward[:self.batch_size] + reward[self.batch_size:]) / 2.0
         rS = reward_avg - b
-        rS = rS.view(1,self.batch_size)
+        #rS = torch.from_numpy(rS).view(1,self.batch_size).float()
+        rS = rS.view(1,self.batch_size) 
+        # print(rS.type())
+        # print(S.type())
         delta_sigma = torch.mm(rS,S) / (2 * self.batch_size * stdev_reward)
 
         #     # move mean to the average of the best idx means
         rT = (reward[:self.batch_size] - reward[self.batch_size:])
+        #rT =torch.from_numpy(rT).float().view(1,self.batch_size)
         rT = rT.view(1,self.batch_size)
         change_mu = self.learning_rate * torch.mm(rT,epsilon)
+        #print(change_mu.size())
+        self.mu =self.mu + change_mu.view(self.mu.size())
+        
         # print(torch.sum(change_mu))
-        self.mu.add_(change_mu.view(self.mu.size()))  
+        # self.mu.add_(change_mu)  
 
         #     print(change_mu[0])
 
@@ -148,14 +128,15 @@ class PEPGCuda:
         change_sigma = torch.min(change_sigma, self.sigma)
         change_sigma = torch.max(change_sigma, - 0.5 * self.sigma)
         #print(change_sigma)
-        self.sigma.add_(change_sigma.view(self.sigma.size()))
-        
+        # self.sigma.add_(change_sigma)
+        self.sigma = self.sigma+ change_sigma.view(self.sigma.size())
+
         #     print(self.sigma)
         self.sigma[self.sigma > self.sigma_limit] *= self.sigma_decay
 
         if (self.learning_rate > self.learning_rate_limit):
           self.learning_rate *= self.learning_rate_decay
-
+        
     def done(self):
         return (self.rms_stdev() < self.done_threshold)
 

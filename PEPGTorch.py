@@ -91,7 +91,6 @@ class PEPGTorch:
             b = reward_table[0] # baseline
 
         reward = reward_table[reward_offset:]
-        #idx = np.argsort(reward)[::-1]
         y,idx =  torch.sort(reward,0)
         idx = reverse(idx)
 
