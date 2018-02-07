@@ -12,7 +12,7 @@ class MLPNet(nn.Module):
         self.fc3 = nn.Linear(40, 10)
     def forward(self, x):
         x = x.view(-1, 28*28)
-        x = F.relu(self.fc1(x))
+        x = F.tanh(self.fc1(x))
         # x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return F.log_softmax(x)  
