@@ -72,7 +72,7 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 		test_acc, test_loss =evaluate(model,test_loader,print_mode=False,cuda=args.cuda)
 
 		if trainLog: 
-			resultLogs/=batch_idx  
+			# resultLogs/=batch_idx  
 			training_log.append([valid_acc,valid_loss,test_acc,test_loss])
 
 		print('valid_acc', valid_acc * 100.)
