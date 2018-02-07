@@ -64,12 +64,12 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 			update_model(curr_solution, model, model_shapes)
 		running_loss/=batch_idx
 		print("{}\{}".format(epoch,running_loss))
-		# valid_acc,valid_loss = evaluate(model,valid_loader, print_mode=False,cuda=args.cuda)
-		# test_acc, test_loss =evaluate(model,test_loader,print_mode=False,cuda=args.cuda)
+		valid_acc,valid_loss = evaluate(model,valid_loader, print_mode=False,cuda=args.cuda)
+		test_acc, test_loss =evaluate(model,test_loader,print_mode=False,cuda=args.cuda)
 
 		if trainLog: 
 			resultLogs/=batch_idx
-			training_log.append([running_loss]+list(resultLogs))
+			training_log.append([valid_acc,valid_loss,test_acc,test_loss]+list(resultLogs))
 
 		print('valid_acc', valid_acc * 100.)
 		if valid_acc >= best_valid_acc:
