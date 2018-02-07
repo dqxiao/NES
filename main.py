@@ -62,8 +62,8 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 		# 	#resultLogs+=tempLog
 
 
-		# 	if (batch_idx % 50 == 0):
-		# 		print(epoch, batch_idx, best_raw_reward,result[1],result[-1])	    
+			if (batch_idx % 50 == 0):
+				print(epoch, batch_idx)	    
 		# 	curr_solution = es.current_param()
 		# 	update_model(curr_solution, model, model_shapes)
 		# running_loss/=batch_idx
