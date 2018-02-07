@@ -97,12 +97,14 @@ def evaluate_anchor(model, test_loader,return_log=True):
 
 
 
-def evaluate(model, test_loader, print_mode=True, return_loss=False):
+def evaluate(model, test_loader, print_mode=True, return_loss=False,cuda=False):
   model.eval()
   test_loss = 0
   correct = 0
   for data, target in test_loader:
-
+    if cuda:
+      data, target = data.cuda(), target.cuda()
+      
     output = model(Variable(data))
     test_loss += F.nll_loss(output, Variable(target), size_average=False).data[0] # sum up batch loss
     _,pred=torch.max(output.data,1)

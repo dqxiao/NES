@@ -29,6 +29,7 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 	# train loop
 		model.eval()
 		resultLogs=np.zeros(5)
+		running_loss =0.0 
 		for batch_idx, (data, target) in enumerate(train_loader):
 			if args.cuda:
 				data, target = data.cuda(), target.cuda()
@@ -37,13 +38,16 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 
 			solutions = es.ask() 
 			reward = np.zeros(es.popsize)
-
+			pop_loss =0.0 
 			for i in range(es.popsize):
 				update_model(solutions[i], model, model_shapes)
 				output = model(data)
 				loss = F.nll_loss(output, target) # loss function
 				reward[i] = - loss.data[0]
+				pop_loss += loss.data[0]
 			best_raw_reward = reward.max()
+			pop_loss/=es.popsize
+			running_loss+= pop_loss
 			# if rewardShaping:
 			# 	reward = compute_centered_ranks(reward)
 			# 	l2_decay = compute_weight_decay(weight_decay_coef, solutions)
@@ -53,17 +57,19 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 			tempLog=np.array([abs(result[1]),abs(reward.mean()),calEntropy(result[3]),abs(reward.std()),result[-1]])
 			resultLogs+=tempLog
 
+
 			if (batch_idx % 50 == 0):
 				print(epoch, batch_idx, best_raw_reward,result[1],result[-1])	    
 			curr_solution = es.current_param()
 			update_model(curr_solution, model, model_shapes)
-
-		valid_acc,valid_loss = evaluate(model,valid_loader, print_mode=False)
-		test_acc, test_loss =evaluate(model,test_loader,print_mode=False)
+		running_loss/=batch_idx
+		print("{}\{}".format(epoch,running_loss))
+		# valid_acc,valid_loss = evaluate(model,valid_loader, print_mode=False,cuda=args.cuda)
+		# test_acc, test_loss =evaluate(model,test_loader,print_mode=False,cuda=args.cuda)
 
 		if trainLog: 
 			resultLogs/=batch_idx
-			training_log.append([valid_acc,valid_loss,test_acc,test_loss]+list(resultLogs))
+			training_log.append([running_loss]+list(resultLogs))
 
 		print('valid_acc', valid_acc * 100.)
 		if valid_acc >= best_valid_acc:
@@ -71,7 +77,7 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 			best_model = copy.deepcopy(model)
 			print('best valid_acc', best_valid_acc * 100.)
 
-	evaluate(best_model, test_loader, print_mode=True)
+	evaluate(best_model, test_loader, print_mode=True,cuda=args.cuda)
 
 def configRun():
 	"""
