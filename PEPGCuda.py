@@ -74,44 +74,35 @@ class PEPGCuda:
         return solutions
 
     def tell(self, reward_table_result):
-        # input must be a numpy float array
-        # reward evaluation: scalar values 
-        assert(len(reward_table_result) == self.popsize), "Inconsistent reward_table size reported."
-
-        reward_table = np.array(reward_table_result)
-
-        if self.rank_fitness:
-          reward_table = compute_centered_ranks(reward_table)
-
-        # if self.weight_decay > 0:
-        #   l2_decay = compute_weight_decay(self.weight_decay, self.solutions)
-        #   reward_table += l2_decay
-
+        reward_table = reward_table_result 
         reward_offset = 1
         if self.average_baseline:
-          b = np.mean(reward_table)
-          reward_offset = 0
+            b = torch.mean(reward_table)
+            reward_offset = 0
         else:
-          b = reward_table[0] # baseline
+            b = reward_table[0] # baseline
 
         reward = reward_table[reward_offset:]
-        idx = np.argsort(reward)[::-1]
+        # idx = np.argsort(reward)[::-1]
+        y,idx =  torch.sort(reward,0)[::-1] 
+        # print(idx.type())
+        idx = idx.type(torch.LongTensor)
 
         best_reward = reward[idx[0]]
         if (best_reward > b or self.average_baseline):
-          best_mu = self.mu + self.epsilon_full[idx[0]]
-          best_reward = reward[idx[0]]
+            best_mu = self.mu + self.epsilon_full[idx[0]]
+            best_reward = reward[idx[0]]
         else:
-          best_mu = self.mu
-          best_reward = b
+            best_mu = self.mu
+            best_reward = b
 
         self.curr_best_reward = best_reward
         self.curr_best_mu = best_mu
 
         if self.first_interation:
-          self.first_interation = False
-          self.best_reward = self.curr_best_reward
-          self.best_mu = best_mu
+            self.first_interation = False
+            self.best_reward = self.curr_best_reward
+            self.best_mu = best_mu
         else:
           if self.forget_best or (self.curr_best_reward > self.best_reward):
             self.best_mu = best_mu
@@ -122,15 +113,15 @@ class PEPGCuda:
         stdev_reward = reward.std()
         epsilon = self.epsilon
         sigma = self.sigma
-        S = ((epsilon * epsilon - (sigma * sigma).expand(epsilon.size())) / sigma.expand(epsilon.size())).cuda()
+        S = ((epsilon * epsilon - (sigma * sigma).expand(epsilon.size())) / sigma.expand(epsilon.size())) 
         reward_avg = (reward[:self.batch_size] + reward[self.batch_size:]) / 2.0
         rS = reward_avg - b
-        rS = torch.from_numpy(rS).view(1,self.batch_size).cuda()
+        rS = rS.view(1,self.batch_size)
         delta_sigma = torch.mm(rS,S) / (2 * self.batch_size * stdev_reward)
 
         #     # move mean to the average of the best idx means
         rT = (reward[:self.batch_size] - reward[self.batch_size:])
-        rT = torch.from_numpy(rT).view(1,self.batch_size).cuda()
+        rT = rT.view(1,self.batch_size)
         change_mu = self.learning_rate * torch.mm(rT,epsilon)
         # print(torch.sum(change_mu))
         self.mu.add_(change_mu)  

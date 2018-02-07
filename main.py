@@ -1,4 +1,4 @@
-import numpy as np
+# import numpy as np
 import math
 import multiprocessing as mp
 import torch
@@ -37,13 +37,15 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 			#done 
 
 			solutions = es.ask() 
-			reward = np.zeros(es.popsize)
+			reward = torch.zeros(es.popsize)
+
 			pop_loss =0.0 
 			for i in range(es.popsize):
 				update_model(solutions[i], model, model_shapes)
 				output = model(data)
 				loss = F.nll_loss(output, target) # loss function
-				reward[i] = - loss.data[0]
+				reward[i] = -loss.data[0]              # get the value 
+				#reward[i] = - loss.data[0]
 				pop_loss += loss.data[0]
 			best_raw_reward = reward.max()
 			pop_loss/=es.popsize
@@ -54,8 +56,8 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 			# 	reward += l2_decay
 			es.tell(reward)
 			result = es.result()
-			tempLog=np.array([abs(result[1]),abs(reward.mean()),calEntropy(result[3]),abs(reward.std()),result[-1]])
-			resultLogs+=tempLog
+			#tempLog=np.array([abs(result[1]),abs(reward.mean()),calEntropy(result[3]),abs(reward.std()),result[-1]])
+			#resultLogs+=tempLog
 
 
 			if (batch_idx % 50 == 0):
@@ -68,8 +70,8 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 		test_acc, test_loss =evaluate(model,test_loader,print_mode=False,cuda=args.cuda)
 
 		if trainLog: 
-			resultLogs/=batch_idx
-			training_log.append([valid_acc,valid_loss,test_acc,test_loss]+list(resultLogs))
+			resultLogs/=batch_idx  
+			training_log.append([valid_acc,valid_loss,test_acc,test_loss])
 
 		print('valid_acc', valid_acc * 100.)
 		if valid_acc >= best_valid_acc:
@@ -88,7 +90,7 @@ def configRun():
 
 
 	torch.manual_seed(0)
-	np.random.seed(0)
+	#np.random.seed(0)
 	
 	weight_decay_coef = 0.1
 
