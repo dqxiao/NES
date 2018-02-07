@@ -156,11 +156,12 @@ class PEPGCuda:
 
         #     # adjust sigma according to the adaptive sigma calculation
         change_sigma = self.sigma_alpha * delta_sigma
+        change_sigma = change_sigma.view(self.sigma.size())
         change_sigma = torch.min(change_sigma, self.sigma)
         change_sigma = torch.max(change_sigma, - 0.5 * self.sigma)
         #print(change_sigma)
         # self.sigma.add_(change_sigma)
-        self.sigma = self.sigma+ change_sigma.view(self.sigma.size())
+        self.sigma = self.sigma+ change_sigma 
 
         #     print(self.sigma)
         self.sigma[self.sigma > self.sigma_limit] *= self.sigma_decay
