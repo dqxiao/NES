@@ -60,7 +60,7 @@ class PEPGCuda:
 
     def rms_stdev(self):
         sigma = self.sigma 
-        return torch_c.mean(torch_c.sqrt(sigma*sigma)) 
+        return torch.mean(torch.sqrt(sigma*sigma)) 
     
 
     def ask(self):
@@ -126,12 +126,12 @@ class PEPGCuda:
         reward_avg = (reward[:self.batch_size] + reward[self.batch_size:]) / 2.0
         rS = reward_avg - b
         rS = rS.view(1,self.batch_size)
-        delta_sigma = torch_c.mm(rS,S) / (2 * self.batch_size * stdev_reward)
+        delta_sigma = torch.mm(rS,S) / (2 * self.batch_size * stdev_reward)
 
         #     # move mean to the average of the best idx means
         rT = (reward[:self.batch_size] - reward[self.batch_size:])
         rT = rT.view(1,self.batch_size)
-        change_mu = self.learning_rate * torch_c.mm(rT,epsilon)
+        change_mu = self.learning_rate * torch.mm(rT,epsilon)
         # print(torch.sum(change_mu))
         self.mu.add_(change_mu)  
 
@@ -139,8 +139,8 @@ class PEPGCuda:
 
         #     # adjust sigma according to the adaptive sigma calculation
         change_sigma = self.sigma_alpha * delta_sigma
-        change_sigma = torch_c.min(change_sigma, self.sigma)
-        change_sigma = torch_c.max(change_sigma, - 0.5 * self.sigma)
+        change_sigma = torch.min(change_sigma, self.sigma)
+        change_sigma = torch.max(change_sigma, - 0.5 * self.sigma)
         #print(change_sigma)
         self.sigma.add_(change_sigma)
         #     print(self.sigma)
