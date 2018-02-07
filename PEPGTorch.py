@@ -83,10 +83,10 @@ class PEPGTorch:
             b = reward_table[0] # baseline
 
         reward = reward_table[reward_offset:]
-        # idx = np.argsort(reward)[::-1]
-        y,idx =  torch.sort(reward,0)[::-1] 
+        idx = np.argsort(reward)[::-1]
+        # y,idx =  torch.sort(reward,0)[::-1] 
         # print(idx.type())
-        idx = idx.type(torch.LongTensor)
+        #idx = idx.type(torch.LongTensor)
 
         best_reward = reward[idx[0]]
         if (best_reward > b or self.average_baseline):
@@ -116,15 +116,19 @@ class PEPGTorch:
         S = ((epsilon * epsilon - (sigma * sigma).expand(epsilon.size())) / sigma.expand(epsilon.size()))
         reward_avg = (reward[:self.batch_size] + reward[self.batch_size:]) / 2.0
         rS = reward_avg - b
-        rS = rS.view(1,self.batch_size)
+        rS = torch.from_numpy(rS).view(1,self.batch_size).float()
+        # print(rS.type())
+        # print(S.type())
         delta_sigma = torch.mm(rS,S) / (2 * self.batch_size * stdev_reward)
 
         #     # move mean to the average of the best idx means
         rT = (reward[:self.batch_size] - reward[self.batch_size:])
-        rT = rT.view(1,self.batch_size)
+        rT =torch.from_numpy(rT).float().view(1,self.batch_size)
         change_mu = self.learning_rate * torch.mm(rT,epsilon)
+        self.mu =self.mu + change_mu
+        
         # print(torch.sum(change_mu))
-        self.mu.add_(change_mu)  
+        # self.mu.add_(change_mu)  
 
         #     print(change_mu[0])
 
