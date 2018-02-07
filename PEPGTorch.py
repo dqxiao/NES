@@ -76,6 +76,10 @@ class PEPGTorch:
     def tell(self, reward_table_result):
         reward_table = reward_table_result 
         reward_offset = 1
+        if self.rank_fitness:
+            reward_table = torch_compute_centered_ranks(reward_table)
+
+        #done 
         if self.average_baseline:
             b = torch.mean(reward_table)
             reward_offset = 0
@@ -116,14 +120,16 @@ class PEPGTorch:
         S = ((epsilon * epsilon - (sigma * sigma).expand(epsilon.size())) / sigma.expand(epsilon.size()))
         reward_avg = (reward[:self.batch_size] + reward[self.batch_size:]) / 2.0
         rS = reward_avg - b
-        rS = torch.from_numpy(rS).view(1,self.batch_size).float()
+        #rS = torch.from_numpy(rS).view(1,self.batch_size).float()
+        rS = rS.view(1,self.batch_size) 
         # print(rS.type())
         # print(S.type())
         delta_sigma = torch.mm(rS,S) / (2 * self.batch_size * stdev_reward)
 
         #     # move mean to the average of the best idx means
         rT = (reward[:self.batch_size] - reward[self.batch_size:])
-        rT =torch.from_numpy(rT).float().view(1,self.batch_size)
+        #rT =torch.from_numpy(rT).float().view(1,self.batch_size)
+        rT = rT.view(1,self.batch_size)
         change_mu = self.learning_rate * torch.mm(rT,epsilon)
         self.mu =self.mu + change_mu
         
