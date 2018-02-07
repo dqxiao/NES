@@ -97,8 +97,7 @@ class PEPGCuda:
         reward = reward_table[reward_offset:]
         # idx = np.argsort(reward)[::-1]
         y,idx =  torch.sort(reward,0)
-        
-        # print(idx.type())
+        idx = reverse(idx)
         idx = idx.type(torch.LongTensor)
 
         best_reward = reward[idx[0]]
@@ -137,7 +136,7 @@ class PEPGCuda:
         rT = rT.view(1,self.batch_size)
         change_mu = self.learning_rate * torch.mm(rT,epsilon)
         # print(torch.sum(change_mu))
-        self.mu.add_(change_mu)  
+        self.mu.add_(change_mu.view(self.mu.size()))  
 
         #     print(change_mu[0])
 
@@ -146,7 +145,8 @@ class PEPGCuda:
         change_sigma = torch.min(change_sigma, self.sigma)
         change_sigma = torch.max(change_sigma, - 0.5 * self.sigma)
         #print(change_sigma)
-        self.sigma.add_(change_sigma)
+        self.sigma.add_(change_sigma.view(self.sigma.size()))
+        
         #     print(self.sigma)
         self.sigma[self.sigma > self.sigma_limit] *= self.sigma_decay
 

@@ -2,11 +2,7 @@ from ESUtil import *
 import torch 
 
 
-def reverse(tensor):
-    idx = [i for i in range(tensor.size(0)-1, -1, -1)]
-    idx = torch.LongTensor(idx)
-    inverted_tensor = tensor.index_select(0, idx)
-    return inverted_tensor
+
 
 
 class PEPGTorch:
