@@ -2,12 +2,14 @@ import numpy as np
 from sklearn.neighbors import NearestNeighbors
 import torch 
 
-def torch_compute_ranks(x):
+def torch_compute_ranks(x,cudaFlag=False):
 
   y,idx=torch.sort(x,0)
   idx =idx.type(torch.LongTensor)
   size = x.size()[0]
   ranks = torch.zeros(x.size())
+  if cudaFlag:
+    ranks.cuda()
   ranks[idx] = torch.range(0,size-1)
   return ranks 
 
