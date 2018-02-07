@@ -104,7 +104,7 @@ class PEPGTorch:
 
         best_reward = reward[idx[0]]
         print(best_reward)
-        print(b)
+        print(reward_table.type())
 
         if (best_reward > b or self.average_baseline):
             best_mu = self.mu + self.epsilon_full[idx[0]]
