@@ -116,6 +116,8 @@ class PEPGTorch:
         self.curr_best_reward = best_reward
         self.curr_best_mu = best_mu
 
+        print(self.curr_best_mu.size())
+
         if self.first_interation:
             self.first_interation = False
             self.best_reward = self.curr_best_reward
