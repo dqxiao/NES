@@ -70,13 +70,13 @@ class PEPGCuda:
         #self.epsilon = torch.randn(self.batch_size,self.num_params).cuda()
         self.epsilon = torch_c.FloatTensor(self.batch_size,self.num_params).uniform_()
         self.epsilon.mul_(self.sigma.expand(self.batch_size,self.num_params))
-        self.epsilon_full = torch_c.cat((self.epsilon, -1*self.epsilon))
+        self.epsilon_full = torch.cat((self.epsilon, -1*self.epsilon))
         
         if self.average_baseline:
             epsilon = self.epsilon_full
         else:
             zeros = torch_c.FloatTensor(1, self.num_params).fill_(0.0)
-            epsilon = torch_c.cat((zeros,self.epsilon_full)) 
+            epsilon = torch.cat((zeros,self.epsilon_full)) 
         solutions = self.mu.expand(epsilon.size())+epsilon
         self.solutions = solutions
         #print(epsilon)
