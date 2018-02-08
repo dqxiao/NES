@@ -89,7 +89,9 @@ class PEPGCuda:
             reward_table = torch_compute_centered_ranks(reward_table,True)
             reward_table=reward_table.cuda()
 
-        #done 
+        if self.weight_decay > 0:
+            l2_decay = torch_compute_weight_decay(self.weight_decay, self.solutions)
+            reward_table += l2_decay
         if self.average_baseline:
             b = torch.mean(reward_table)
             reward_offset = 0

@@ -23,14 +23,19 @@ def torch_compute_centered_ranks(x,cudaFlag):
   return y 
 
 def reverse(tensor):
-    idx = [i for i in range(tensor.size(0)-1, -1, -1)]
+  idx = [i for i in range(tensor.size(0)-1, -1, -1)]
 
-    idx = torch.LongTensor(idx)
-    if "cuda" in tensor.type():
-      idx = idx.cuda()
-    inverted_tensor = tensor.index_select(0, idx)
-    return inverted_tensor
+  idx = torch.LongTensor(idx)
+  if "cuda" in tensor.type():
+    idx = idx.cuda()
+  inverted_tensor = tensor.index_select(0, idx)
+  return inverted_tensor
     
+
+def torch_compute_weight_decay(weight_decay, model_param_tensors):
+  return - weight_decay * torch.mean(model_param_tensors*model_param_tensors,1)
+
+
 
 def compute_ranks(x):
   """
