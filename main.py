@@ -84,7 +84,7 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 	# 		best_model = copy.deepcopy(model)
 	# 		print('best valid_acc', best_valid_acc * 100.)
 
-	# evaluate(best_model, test_loader, print_mode=True,cuda=args.cuda)
+	evaluate(model, test_loader, print_mode=True,cuda=args.cuda)
 
 def configRun():
 	"""
@@ -163,7 +163,7 @@ if __name__=="__main__":
 	configRun()
 
 	parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
-	parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
+	parser.add_argument('--lr', default=0.01, type=float, help='learning rate')
 	parser.add_argument('--model',default="VGG16",help='DNN model')
 	parser.add_argument('--optimizer',default='PEPG',help='SGD or ES methods used')
 	parser.add_argument('--popsize',default=0, type=int, help='ES popsize')
@@ -205,7 +205,7 @@ if __name__=="__main__":
 			"PEPG": createPEPGCuda(ea)
 		}
 		es= esCreate[args.optimizer]
-		
+
 	else:
 		esCreate={
 			"XNESVar": createXNESVar(ea),
