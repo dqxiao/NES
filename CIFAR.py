@@ -180,7 +180,7 @@ if __name__=="__main__":
 	
 	
 
-	model=vgg(args.model) 
+	model=VGG(args.model) 
 
 	if args.cuda:
 		torch.cuda.manual_seed(0)
