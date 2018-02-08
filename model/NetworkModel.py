@@ -23,9 +23,9 @@ class MLPNet(nn.Module):
 
 
 
-class Net(nn.Module):
+class CNN(nn.Module):
   def __init__(self):
-    super(Net, self).__init__()
+    super(CNN, self).__init__()
     self.num_filter1 = 8 
     self.num_filter2 = 16
     self.num_padding = 2
@@ -44,7 +44,9 @@ class Net(nn.Module):
     x = x.view(-1, self.num_filter2*7*7)   # reshape Variable
     x = self.fc(x)
     return F.log_softmax(x)
-    # return x 
+  
+  def name(self):
+    return "CNN"
 
 
 def cal_nparams(model):

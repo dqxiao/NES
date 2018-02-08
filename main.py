@@ -163,7 +163,7 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 	parser.add_argument('--lr', default=0.01, type=float, help='learning rate')
-	parser.add_argument('--model',default="VGG16",help='DNN model')
+	parser.add_argument('--model',default="MLP",help='DNN model')
 	parser.add_argument('--optimizer',default='PEPG',help='SGD or ES methods used')
 	parser.add_argument('--popsize',default=0, type=int, help='ES popsize')
 	parser.add_argument('--opt',default=1, type=int, help='ES sigma option')
@@ -179,8 +179,10 @@ if __name__=="__main__":
 	
 	
 	
-
-	model=MLPNet()
+	if args.model=="MLP":
+		model = MLPNet()
+	else:
+		model = 
 
 	if args.cuda:
 		torch.cuda.manual_seed(0)
