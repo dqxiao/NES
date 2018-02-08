@@ -62,7 +62,7 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 		# 	#resultLogs+=tempLog
 
 
-			if (batch_idx % 50 == 0):
+			if (batch_idx % 10 == 0):
 				print(epoch, batch_idx,best_raw_reward)	    
 			curr_solution = es.current_param()
 			update_model(curr_solution, model, model_shapes)
@@ -119,13 +119,13 @@ def cifar10Feed():
 	])
 
 	trainset = datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
-	train_loader = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True, num_workers=2)
+	train_loader = torch.utils.data.DataLoader(trainset, batch_size=1000, shuffle=True, num_workers=2)
 
 	valid_loader = train_loader
 
 
 	testset = datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
-	test_loader = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False, num_workers=2)
+	test_loader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=2)
 
 	return "CIFAR10"
 
@@ -170,7 +170,7 @@ if __name__=="__main__":
 	parser.add_argument('--diversity_base',default=0.0, type=float, help='diversity up bounded')
 	parser.add_argument('--cuda',default=False,type=bool,help='use cuda or not')
 	parser.add_argument('--epochs',default=100, type=int, help='the number of iteration')
-	parser.add_argument('--batch_size',default=100,type=int,help='batch size')
+	parser.add_argument('--batch_size',default=1000,type=int,help='batch size')
 	# parser.add_argument()
 	
 	args = parser.parse_args()
