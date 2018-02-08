@@ -181,6 +181,7 @@ if __name__=="__main__":
 	model=MLPNet()
 
 	if args.cuda:
+		torch.cuda.manual_seed(0)
 		model.cuda()
 	NPARAMS,model_shapes=cal_nparams(model)
 

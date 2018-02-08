@@ -67,8 +67,8 @@ class PEPGCuda:
         '''returns a list of parameters'''
     # antithetic sampling
     # self.epsilon = np.random.randn(self.batch_size, self.num_params) * self.sigma.reshape(1, self.num_params)
-        self.epsilon = torch.randn(self.batch_size,self.num_params).cuda()
-        #self.epsilon = torch_c.FloatTensor(self.batch_size,self.num_params).uniform_()
+        # self.epsilon = torch.randn(self.batch_size,self.num_params).cuda()
+        self.epsilon = torch_c.FloatTensor(self.batch_size,self.num_params).normal_()
         self.epsilon.mul_(self.sigma.expand(self.batch_size,self.num_params))
         self.epsilon_full = torch.cat((self.epsilon, -1*self.epsilon))
         
