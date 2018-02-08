@@ -23,9 +23,9 @@ class MLPNet(nn.Module):
 
 
 
-class CNN(nn.Module):
+class CNNNet(nn.Module):
   def __init__(self):
-    super(CNN, self).__init__()
+    super(CNNNet, self).__init__()
     self.num_filter1 = 8 
     self.num_filter2 = 16
     self.num_padding = 2

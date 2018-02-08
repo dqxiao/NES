@@ -182,7 +182,7 @@ if __name__=="__main__":
 	if args.model=="MLP":
 		model = MLPNet()
 	else:
-		model = 
+		model = CNNNet()
 
 	if args.cuda:
 		torch.cuda.manual_seed(0)
