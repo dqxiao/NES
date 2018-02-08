@@ -1,4 +1,3 @@
-import numpy as np
 import math
 import multiprocessing as mp
 import torch
@@ -28,7 +27,8 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 	for epoch in range(1, args.epochs + 1):
 	# train loop
 		model.eval()
-		resultLogs=np.zeros(5)
+		# resultLogs=np.zeros(5)
+		running_loss =0.0 
 		for batch_idx, (data, target) in enumerate(train_loader):
 			if args.cuda:
 				data, target = data.cuda(), target.cuda()
@@ -36,44 +36,54 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 			#done 
 
 			solutions = es.ask() 
-			reward = np.zeros(es.popsize)
+			#reward = np.zeros(es.popsize)
+			reward = torch.zeros(es.popsize)
+			if args.cuda:
+				reward=reward.cuda()
 
+			pop_loss =0.0 
 			for i in range(es.popsize):
 				update_model(solutions[i], model, model_shapes)
 				output = model(data)
 				loss = F.nll_loss(output, target) # loss function
-				reward[i] = - loss.data[0]
+				reward[i] = -loss.data[0]              # get the value 
+				#reward[i] = - loss.data[0]
+				pop_loss += loss.data[0]
 			best_raw_reward = reward.max()
-			if rewardShaping:
-				reward = compute_centered_ranks(reward)
-				l2_decay = compute_weight_decay(weight_decay_coef, solutions)
-				reward += l2_decay
+			pop_loss/=es.popsize
+			running_loss+= pop_loss
+			# if True:
+			# 	reward = compute_centered_ranks(reward)
+			# 	l2_decay = compute_weight_decay(weight_decay_coef, solutions)
+			# 	reward += l2_decay
 			es.tell(reward)
 			result = es.result()
-			tempLog=np.array([abs(result[1]),abs(reward.mean()),calEntropy(result[3]),abs(reward.std()),result[-1]])
-			resultLogs+=tempLog
+		# 	#tempLog=np.array([abs(result[1]),abs(reward.mean()),calEntropy(result[3]),abs(reward.std()),result[-1]])
+		# 	#resultLogs+=tempLog
+
 
 			if (batch_idx % 50 == 0):
-				print(epoch, batch_idx, best_raw_reward,result[1],result[-1])	    
+				print(epoch, batch_idx,best_raw_reward)	    
 			curr_solution = es.current_param()
 			update_model(curr_solution, model, model_shapes)
+		running_loss/=batch_idx
+		print("{}\{}".format(epoch,running_loss))
+		if trainLog:
+			training_log.append(running_loss)
+	# 	valid_acc,valid_loss = evaluate(model,valid_loader, print_mode=False,cuda=args.cuda)
+	# 	test_acc, test_loss =evaluate(model,test_loader,print_mode=False,cuda=args.cuda)
 
-		valid_acc,valid_loss = evaluate(model,valid_loader, print_mode=False)
-		test_acc, test_loss =evaluate(model,test_loader,print_mode=False)
+	# 	if trainLog: 
+	# 		# resultLogs/=batch_idx  
+	# 		training_log.append([valid_acc,valid_loss,test_acc,test_loss])
 
-		if trainLog: 
-			resultLogs/=batch_idx
-			training_log.append([valid_acc,valid_loss,test_acc,test_loss]+list(resultLogs))
+	# 	print('valid_acc', valid_acc * 100.)
+	# 	if valid_acc >= best_valid_acc:
+	# 		best_valid_acc = valid_acc
+	# 		best_model = copy.deepcopy(model)
+	# 		print('best valid_acc', best_valid_acc * 100.)
 
-		print('valid_acc', valid_acc * 100.)
-		if valid_acc >= best_valid_acc:
-			best_valid_acc = valid_acc
-			best_model = copy.deepcopy(model)
-			print('best valid_acc', best_valid_acc * 100.)
-
-	evaluate(best_model, test_loader, print_mode=True)
-
-
+	evaluate(model, test_loader, print_mode=True,cuda=args.cuda)
 
 def configRun():
 	"""
@@ -84,7 +94,7 @@ def configRun():
 
 
 	torch.manual_seed(0)
-	np.random.seed(0)
+	#np.random.seed(0)
 	
 	weight_decay_coef = 0.1
 
@@ -119,6 +129,23 @@ def cifar10Feed():
 
 	return "CIFAR10"
 
+def mnistFeed():
+	global train_loader
+	global valid_loader
+	global test_loader
+
+	kwargs = {'num_workers': 1, 'pin_memory': False} if args.cuda else {}
+
+	train_loader = torch.utils.data.DataLoader(datasets.MNIST('MNIST_data', train=True, download=True, transform=transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])),
+  			batch_size=args.batch_size, shuffle=True, **kwargs)
+
+	valid_loader = train_loader
+
+	test_loader = torch.utils.data.DataLoader(
+  		datasets.MNIST('MNIST_data', train=False, transform=transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.1307,), (0.3081,))])),
+  			batch_size=args.batch_size, shuffle=True, **kwargs)
+
+	return "MNIST"
 
 if __name__=="__main__":
 
@@ -135,7 +162,7 @@ if __name__=="__main__":
 	configRun()
 
 	parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
-	parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
+	parser.add_argument('--lr', default=0.01, type=float, help='learning rate')
 	parser.add_argument('--model',default="VGG16",help='DNN model')
 	parser.add_argument('--optimizer',default='PEPG',help='SGD or ES methods used')
 	parser.add_argument('--popsize',default=0, type=int, help='ES popsize')
@@ -148,15 +175,15 @@ if __name__=="__main__":
 	
 	args = parser.parse_args()
 
-
 	datasetName=cifar10Feed()
 	
 	
 	
 
-	model=VGG(args.model)
-	#done 
+	model=vgg(args.model) 
+
 	if args.cuda:
+		torch.cuda.manual_seed(0)
 		model.cuda()
 	NPARAMS,model_shapes=cal_nparams(model)
 
@@ -170,35 +197,41 @@ if __name__=="__main__":
 		NPOPULATION = args.popsize
 
 	ea=ESArgs(NPARAMS=NPARAMS, NPOPULATION=NPOPULATION,diversity_base=args.diversity_base, opt=args.opt,lr=args.lr) 
-	esCreate={
-		"XNESVar": createXNESVar(ea),
-		"XNESSA": createXNESSA(ea),
-		"PEPG": createPEPG(ea),
-		"PEPGVar": createPEPGVar(ea)
-	}
+	if args.cuda:
+		# es = createPEPGCuda(ea)
+		esCreate={
+			"PEPGVar": createPEPGVarCuda(ea),
+			"PEPG": createPEPGCuda(ea)
+		}
+		es= esCreate[args.optimizer]
 
-	es=esCreate[args.optimizer]
+	else:
+		esCreate={
+			"XNESVar": createXNESVar(ea),
+			"XNESSA": createXNESSA(ea),
+			"PEPG": createPEPG(ea),
+			"PEPGVar": createPEPGVar(ea)
+		}
+
+		es=esCreate[args.optimizer]
 
 
 
 	print("Debug {} function".format(es.name()))
 	print("with popsize:{}, db:{}, Opt:{}".format(NPOPULATION, args.diversity_base,args.opt))
 
-	training_log=[] 
+	training_log=[]
+	lrtag="" 
+	if args.lr!=0.01:
+		lrtag="slr{}".format(args.lr)
+
 	if args.popsize==0:
-		fname = "{}-{}-{}".format(args.optimizer,args.opt,args.diversity_base)
+		fname = "{}{}-{}-{}".format(lrtag,args.optimizer,args.opt,args.diversity_base)
 	else:
-		fname = "BP-{}-{}-{}".format(args.optimizer,args.opt,args.diversity_base)
+		fname = "{}BP-{}-{}-{}".format(lrtag,args.optimizer,args.opt,args.diversity_base)
 	folder ="{}/{}/".format(datasetName,model.name())
 
 	testRuns(training_log)
 	if not os.path.exists("./"+folder):
 		os.makedirs(folder)
 	pickle_write(np.array(training_log),folder+fname,"")
-
-	
-
-
-
-
-
