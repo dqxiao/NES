@@ -159,4 +159,4 @@ class PEPGVarCuda:
         return (self.best_mu, self.best_reward, self.curr_best_reward, self.sigma, self.rms_stdev())
 
     def name(self):
-        return "PEPGVar"
+        return "PEPGVar.1"
