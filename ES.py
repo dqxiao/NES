@@ -9,6 +9,7 @@ from collections import namedtuple
 from PEPGVar import * 
 from PEPGTorch import * 
 from PEPGCuda import *
+from PEPGVarCuda import * 
 
 ESArgs = namedtuple('esArgs', ['NPARAMS', 'NPOPULATION','diversity_base','opt','lr'])
 
