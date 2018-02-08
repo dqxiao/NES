@@ -60,7 +60,7 @@ class Net(nn.Module):
         x = F.tanh(self.fc1(x))
         x = F.tanh(self.fc2(x))
         x = self.fc3(x)
-        return x
+        return F.log_softmax(x) 
 
     def name(self):
         return "CNN"
