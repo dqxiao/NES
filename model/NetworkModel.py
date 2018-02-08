@@ -69,7 +69,7 @@ def update_model(flat_param, model, model_shapes):
   for param in model.parameters():
     delta = np.product(model_shapes[i])
     block = flat_param[idx:idx+delta]
-    # #block = np.reshape(block, model_shapes[i])
+    # block = np.reshape(block, model_shapes[i])
     # i += 1
     # idx += delta
     # block_data = torch.from_numpy(block).float()

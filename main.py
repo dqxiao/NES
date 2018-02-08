@@ -37,6 +37,7 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 			#done 
 
 			solutions = es.ask() 
+			#reward = np.zeros(es.popsize)
 			reward = torch.zeros(es.popsize)
 			if args.cuda:
 				reward=reward.cuda()
@@ -52,7 +53,7 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 			best_raw_reward = reward.max()
 			pop_loss/=es.popsize
 			running_loss+= pop_loss
-			# if rewardShaping:
+			# if True:
 			# 	reward = compute_centered_ranks(reward)
 			# 	l2_decay = compute_weight_decay(weight_decay_coef, solutions)
 			# 	reward += l2_decay
@@ -66,22 +67,24 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 				print(epoch, batch_idx,best_raw_reward)	    
 			curr_solution = es.current_param()
 			update_model(curr_solution, model, model_shapes)
-		# running_loss/=batch_idx
-		# print("{}\{}".format(epoch,running_loss))
-		valid_acc,valid_loss = evaluate(model,valid_loader, print_mode=False,cuda=args.cuda)
-		test_acc, test_loss =evaluate(model,test_loader,print_mode=False,cuda=args.cuda)
+		running_loss/=batch_idx
+		print("{}\{}".format(epoch,running_loss))
+		if trainLog:
+			training_log.append(running_loss)
+	# 	valid_acc,valid_loss = evaluate(model,valid_loader, print_mode=False,cuda=args.cuda)
+	# 	test_acc, test_loss =evaluate(model,test_loader,print_mode=False,cuda=args.cuda)
 
-		if trainLog: 
-			# resultLogs/=batch_idx  
-			training_log.append([valid_acc,valid_loss,test_acc,test_loss])
+	# 	if trainLog: 
+	# 		# resultLogs/=batch_idx  
+	# 		training_log.append([valid_acc,valid_loss,test_acc,test_loss])
 
-		print('valid_acc', valid_acc * 100.)
-		if valid_acc >= best_valid_acc:
-			best_valid_acc = valid_acc
-			best_model = copy.deepcopy(model)
-			print('best valid_acc', best_valid_acc * 100.)
+	# 	print('valid_acc', valid_acc * 100.)
+	# 	if valid_acc >= best_valid_acc:
+	# 		best_valid_acc = valid_acc
+	# 		best_model = copy.deepcopy(model)
+	# 		print('best valid_acc', best_valid_acc * 100.)
 
-	evaluate(best_model, test_loader, print_mode=True,cuda=args.cuda)
+	# evaluate(best_model, test_loader, print_mode=True,cuda=args.cuda)
 
 def configRun():
 	"""
