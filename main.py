@@ -221,11 +221,15 @@ if __name__=="__main__":
 	print("Debug {} function".format(es.name()))
 	print("with popsize:{}, db:{}, Opt:{}".format(NPOPULATION, args.diversity_base,args.opt))
 
-	training_log=[] 
+	training_log=[]
+	lrtag="" 
+	if args.lr!=0.01:
+		lrtag="slr{}".format(args.lr)
+
 	if args.popsize==0:
-		fname = "{}-{}-{}".format(args.optimizer,args.opt,args.diversity_base)
+		fname = "{}{}-{}-{}".format(lrtag,args.optimizer,args.opt,args.diversity_base)
 	else:
-		fname = "BP-{}-{}-{}".format(args.optimizer,args.opt,args.diversity_base)
+		fname = "{}BP-{}-{}-{}".format(lrtag,args.optimizer,args.opt,args.diversity_base)
 	folder ="{}/{}/".format(datasetName,model.name())
 
 	testRuns(training_log)
