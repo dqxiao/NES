@@ -137,7 +137,7 @@ class PEPGVarCuda:
         change_sigma = torch.min(change_sigma, self.sigma)
         change_sigma = torch.max(change_sigma, - 0.5 * self.sigma)
         
-        dB_sigma = self.diversity_base * self.sigma # base on my equation 
+        dB_sigma = self.learning_rate * self.diversity_base * self.sigma # base on my equation 
         self.sigma = self.sigma + dB_sigma 
         self.sigma = self.sigma+ change_sigma 
 
