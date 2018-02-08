@@ -36,7 +36,7 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 			#done 
 
 			solutions = es.ask() 
-			#reward = np.zeros(es.popsize)
+			# reward = np.zeros(es.popsize)
 			reward = torch.zeros(es.popsize)
 			if args.cuda:
 				reward=reward.cuda()
