@@ -199,7 +199,13 @@ if __name__=="__main__":
 
 	ea=ESArgs(NPARAMS=NPARAMS, NPOPULATION=NPOPULATION,diversity_base=args.diversity_base, opt=args.opt,lr=args.lr) 
 	if args.cuda:
-		es = createPEPGCuda(ea)
+		# es = createPEPGCuda(ea)
+		esCreate={
+			"PEPGVar": createPEPGVarCuda(ea),
+			"PEPG": createPEPGCuda(ea)
+		}
+		es= esCreate[args.optimizer]
+		
 	else:
 		esCreate={
 			"XNESVar": createXNESVar(ea),
