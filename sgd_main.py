@@ -85,7 +85,7 @@ if __name__=="__main__":
 	parser.add_argument('--diversity_base',default=0.0, type=float, help='diversity up bounded')
 	parser.add_argument('--cuda',default=False,type=bool,help='use cuda or not')
 	parser.add_argument('--epochs',default=100, type=int, help='the number of iteration')
-	parser.add_argument('--batch_size',default=128,type=int,help='batch size')
+	parser.add_argument('--batch_size',default=100,type=int,help='batch size')
 	parser.add_argument('--momentum',default=0.99,type=float,help='momentum')
 	# parser.add_argument()
 	

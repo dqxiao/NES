@@ -7,6 +7,7 @@ from torch.autograd import Variable
 
 from collections import namedtuple
 import copy
+import torch.optim as optim
 
 # import sys
 import argparse
@@ -147,6 +148,65 @@ def mnistFeed():
 
 	return "MNIST"
 
+
+
+# def update_model(mute):
+#     mutatio=dict()
+#     for n,p in model.named_parameters():
+#         mutation[n]=t.zeros_like(p.data).normal_()*mute+1 
+#         p.data.mul_(mutation[n])
+    
+    
+
+
+# def PB_train(epoch,printTrain=True,p):
+#     # population-based training 
+#     train_loss=0 
+#     model.train()
+#     for batch_idx, (data,target) in enumerate(train_loader):
+#         data, target = Variable(data),Variable(target)
+#         data, target = data.cuda(),target.cuda()
+        
+#         best_model, best_loss= None,1000
+#         init_model = copy.copy(model)
+#         for i in range(p):
+#             update_model(0.01) 
+#             ouput = model(data)
+#             model.zero_grad() # generate gradient 
+#             loss = F.nll_loss(ouput,target)  
+#             if loss< best_loss:
+#                 best_model = copy.copy(model)
+#                 best_loss  = loss 
+#             model = init_model  
+#             optimizer.step()
+   
+#         train_loss+= best_loss 
+#         if batch_idx % 100 ==0:
+#             print("{}/{}".format(batch_idx,train_loss/(btach_idx+1)))
+        
+            
+        
+    
+
+
+# def train(epoch,printTrain=True):
+# 	model.train()
+# 	train_loss=0
+# 	for batch_idx, (data, target) in enumerate(train_loader):
+# 		data, target= Variable(data), Variable(target)
+# 		data, target= data.cuda(), target.cuda()
+# 		output = model(data)
+# 		model.zero_grad()
+# 		loss = F.nll_loss(output, target) 
+# 		train_loss += loss.data[0]
+# 		loss.backward()
+# 		optimizer.step()
+# 		if batch_idx % 100 ==0:
+# 			print('{}/{}'.format(batch_idx,train_loss/(batch_idx+1)))
+
+            
+    
+
 if __name__=="__main__":
 
 	
@@ -169,14 +229,14 @@ if __name__=="__main__":
 	parser.add_argument('--opt',default=1, type=int, help='ES sigma option')
 	parser.add_argument('--diversity_base',default=0.0, type=float, help='diversity up bounded')
 	parser.add_argument('--cuda',default=False,type=bool,help='use cuda or not')
-	parser.add_argument('--epochs',default=100, type=int, help='the number of iteration')
+	parser.add_argument('--epochs',default=500, type=int, help='the number of iteration')
 	parser.add_argument('--batch_size',default=100,type=int,help='batch size')
 	# parser.add_argument()
 	
 	args = parser.parse_args()
 
 	datasetName=cifar10Feed()
-	
+
 	
 	
 
@@ -185,15 +245,26 @@ if __name__=="__main__":
 		model = Net()
 	else:
 		model = VGG(args.model)
-
 	if args.cuda:
 		torch.cuda.manual_seed(0)
 		model.cuda()
 	NPARAMS,model_shapes=cal_nparams(model)
 
+        
+# 	optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
+    
+	if args.cuda:
+		torch.cuda.manual_seed(0)
+		model.cuda()
 
-
-
+# 	for epoch in range(args.epochs):
+# 		train(epoch)
+# 	evaluate(model, test_loader, print_mode=True,cuda=args.cuda)
+    
+# 	optimier = optim.SGD(model.parameters(), lr=args.lr/8, momentum=0.9, weight_decay=5e-4)
+# 	for epoch in range(args.epochs):
+# 		PB_train(epoch,8)
+# 	evaluate(model, test_loader, print_mode=True,cuda=args.cuda)
 	if args.popsize==0:	
 		NPOPULATION = int(4+3*np.ceil(np.log(NPARAMS)))
 		NPOPULATION = int(NPOPULATION/2)*2+1
@@ -239,3 +310,4 @@ if __name__=="__main__":
 	if not os.path.exists("./"+folder):
 		os.makedirs(folder)
 	pickle_write(np.array(training_log),folder+fname,"")
+                  

@@ -62,7 +62,7 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 		# 	#resultLogs+=tempLog
 
 
-			if (batch_idx % 10 == 0):
+			if (batch_idx % 100 == 0):
 				print(epoch, batch_idx,best_raw_reward)	    
 			curr_solution = es.current_param()
 			update_model(curr_solution, model, model_shapes)
@@ -170,7 +170,7 @@ if __name__=="__main__":
 	parser.add_argument('--diversity_base',default=0.0, type=float, help='diversity up bounded')
 	parser.add_argument('--cuda',default=False,type=bool,help='use cuda or not')
 	parser.add_argument('--epochs',default=100, type=int, help='the number of iteration')
-	parser.add_argument('--batch_size',default=1000,type=int,help='batch size')
+	parser.add_argument('--batch_size',default=100,type=int,help='batch size')
 	# parser.add_argument()
 	
 	args = parser.parse_args()
