@@ -8,7 +8,7 @@ class PEPGVarCuda:
                sigma_alpha=0.20,             # learning rate for standard deviation
                sigma_decay=0.999,            # anneal standard deviation
                sigma_limit=0.01,             # stop annealing if less than this
-               learning_rate=0.01,           # learning rate for standard deviation
+               learning_rate=1,           # learning rate for standard deviation
                learning_rate_decay = 0.9999, # annealing the learning rate
                learning_rate_limit = 0.001,  # stop annealing learning rate
                popsize=255,                  # population size
@@ -57,7 +57,13 @@ class PEPGVarCuda:
         sigma = self.sigma 
         return torch.mean(torch.sqrt(sigma*sigma)) 
     
-
+    
+    def set_diversity_base(self,val):
+        self.diversity_base = val 
+        #done 
+    def diversity_base(self):
+        return self.diversity_base
+    
     def ask(self):
         '''returns a list of parameters'''
         # antithetic sampling

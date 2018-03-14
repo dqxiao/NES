@@ -35,15 +35,7 @@ class PEPGCuda:
           assert (self.popsize & 1), "Population size must be odd"
           self.batch_size = int((self.popsize - 1) / 2)
         self.forget_best = forget_best
-
-        #
-
-
-        # self.batch_reward = torch.zeros(self.batch_size*2).cuda()
-        # self.mu = torch.zeros(self.num_params).cuda()
-        # self.sigma = torch.ones(self.num_params).mul_(self.sigma_init).cuda()
-        # self.curr_best_mu = torch.zeros(self.num_params).cuda()
-        # self.best_mu = torch.zeros(self.num_params).cuda()
+        
         self.batch_reward = torch_c.FloatTensor(self.batch_size*2).fill_(0.0)
         self.mu = torch_c.FloatTensor(self.num_params).fill_(0.0)
         self.sigma = torch_c.FloatTensor(self.num_params).fill_(self.sigma_init)
@@ -62,7 +54,7 @@ class PEPGCuda:
         sigma = self.sigma 
         return torch.mean(torch.sqrt(sigma*sigma)) 
     
-
+        
     def ask(self):
         '''returns a list of parameters'''
     # antithetic sampling

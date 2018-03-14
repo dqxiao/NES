@@ -23,12 +23,14 @@ import os
 
 def testRuns(training_log, trainLog=True,rewardShaping=False):
 	best_valid_acc = 0
-	# start=time.time() # just for timing
+	reward_min = None 
 	for epoch in range(1, args.epochs + 1):
 	# train loop
 		model.eval()
 		# resultLogs=np.zeros(5)
 		running_loss =0.0 
+		if epoch<10:
+            es.
 		for batch_idx, (data, target) in enumerate(train_loader):
 			if args.cuda:
 				data, target = data.cuda(), target.cuda()
@@ -47,11 +49,11 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 				output = model(data)
 				loss = F.nll_loss(output, target) # loss function
 				reward[i] = -loss.data[0]              # get the value 
-				#reward[i] = - loss.data[0]
 				pop_loss += loss.data[0]
 			best_raw_reward = reward.max()
 			pop_loss/=es.popsize
 			running_loss+= pop_loss
+            
 			# if True:
 			# 	reward = compute_centered_ranks(reward)
 			# 	l2_decay = compute_weight_decay(weight_decay_coef, solutions)
@@ -61,9 +63,8 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 		# 	#tempLog=np.array([abs(result[1]),abs(reward.mean()),calEntropy(result[3]),abs(reward.std()),result[-1]])
 		# 	#resultLogs+=tempLog
 
-
 			if (batch_idx % 100 == 0):
-				print(epoch, batch_idx,best_raw_reward)	    
+				print(epoch, batch_idx,best_raw_reward,es.diversity_base,result[-1])	    
 			curr_solution = es.current_param()
 			update_model(curr_solution, model, model_shapes)
 		running_loss/=batch_idx
@@ -237,7 +238,6 @@ if __name__=="__main__":
 	if not os.path.exists("./"+folder):
 		os.makedirs(folder)
 	pickle_write(np.array(training_log),folder+fname,"")
-	
 
 
 

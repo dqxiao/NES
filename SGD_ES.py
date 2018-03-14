@@ -24,6 +24,8 @@ def cal_nparams(model):
     return int(NPARAMS), model_shapes
 
 
+
+#done 
 class SGDmomentum():
     def __init__(self,net,momentum,lr=0.001):
         self.lr=lr 
@@ -33,9 +35,6 @@ class SGDmomentum():
             self.momentum_buffer[n]=t.zeros_like(p.data)
 
 
-
-
-
     def step(self,net,data,target,base):
         #
         momentum=self.momentum
@@ -43,10 +42,6 @@ class SGDmomentum():
         for n,p in net.named_parameters():
             d_p=p.grad.data
             self.momentum_buffer[n].mul_(momentum).add_(d_p) #update momentum_buff 
-            #self.momentum_buffer[n]=self.momentum_buffer[n]*momentum+d_p
-            # p.data=p.data -lr*self.momentum_buffer[n] 
-            #move to next 
-
             p.data.add_(-1*lr*self.momentum_buffer[n])
 
         return 1,0,self.momentum
@@ -59,15 +54,13 @@ class SGD_OES_NN():
         self.lr = lr 
         self.v = {}
         self.popsize = 8
-        self.sigma = 0.01 
-        self.hlr = 0.1   # hyper-learning rate 
+        self.sigma = 0.1 
+        self.hlr = 0.1   # hyper-learning rate
+        self.gsigma= 0.2 
         self.momentum = momentum 
 
         for name, p in net.named_parameters():
             self.v[name] = t.zeros_like(p.data)
-
-
-#         self.mu = np.array([self.momentum,1])  # [2,1] 
         self.base  = self.alpha_reTrans(momentum)
         self.mu = np.array([self.base,1])
         self.num_params =2 
@@ -77,7 +70,7 @@ class SGD_OES_NN():
 
         self.epsilon = np.zeros([self.popsize,2])
         self.epsilon[:,0] = np.random.normal(0,self.sigma,self.popsize) # uniformal distribution 
-        self.epsilon[:,1] = np.random.normal(0,self.sigma,self.popsize) #normal distribution 
+        self.epsilon[:,1] = np.random.normal(0,self.gsigma,self.popsize) #normal distribution 
 
 
     def alpha_trans(self,i):
@@ -125,18 +118,16 @@ class SGD_OES_NN():
 
         normalized_reward = (reward - np.mean(reward)) / np.std(reward)
         #update the expectation of 1 
-        self.mu += self.hlr/(self.popsize*self.sigma)*np.dot(self.epsilon.T, normalized_reward) # update the beta 
-        #what happens 
+        self.mu[0] += self.hlr/(self.popsize*self.sigma)*np.dot(self.epsilon.T, normalized_reward)[0] # update the beta 
+        self.mu[1] += self.hlr/(self.popsize*self.gsigma)*np.dot(self.epsilon.T, normalized_reward)[1]
         
+        self.mu[0] = max(1,self.mu[0])
+        self.mu[0] = min(4,self.mu[0])
+        c_momentum= self.mu[0]
         for name, p in net.named_parameters():
             d_p = p.grad.data
             self.v[name].mul_(self.alpha_trans(self.mu[0])).add_(d_p*self.mu[1])
             p.data.add_(-1*lr*self.v[name])
-
-        #reset the beta to the original one 
-        self.mu[1]= 1 
-        c_momentum= self.mu[0]
-        self.mu[0]=self.base 
         
 
         return loss_min[0], np.std(reward), self.alpha_trans(c_momentum)
@@ -149,12 +140,13 @@ class SGD_OES():
         self.var = {}
         self.popsize = 8
         self.sigma = 0.01 
+        self.gsigma = 0.2 
         self.hlr = 0.1   # hyper-learning rate 
        
         for name, p in net.named_parameters():
             self.v[name]=t.zeros_like(p.data)
             self.v[name+"g"]=1 
-            self.var[name]=np.random.normal(0,self.sigma,self.popsize) 
+            self.var[name]=np.random.normal(0,self.gsigma,self.popsize) 
            
         self.v['momentum']= momentum 
         self.momentum = momentum
@@ -168,9 +160,6 @@ class SGD_OES():
 
         reward = np.zeros(self.popsize) 
         
-#         self.v['momentum'] = self.momentum
-#         for name,p in net.named_parameters():
-#             self.var[name+"g"]=1 
   
         # using this object 
         for i in range(self.popsize):
@@ -197,23 +186,23 @@ class SGD_OES():
                 temp =  temp + d_p*(self.v[name+"g"]+self.var[name][i])
                 p.data.add_(lr*temp)
 
-#         reward = compute_centered_ranks(reward)   
 
         normalized_reward = (reward - np.mean(reward)) / np.std(reward)
         #update the expectation of 1, momentum 
         self.v['momentum'] += self.hlr/(self.popsize*self.sigma)*np.dot(self.var['momentum'].T, normalized_reward)
+        self.v['momentum'] = min(1, self.v['momentum'])
+        self.v['momentum'] = max(0, self.v['momentum'])
+        c_momentum= self.v['momentum']
         for name, p in net.named_parameters():
             d_p = p.grad.data
-            self.v[name+"g"] += self.hlr/(self.popsize*self.sigma)*np.dot(self.var[name].T, normalized_reward)
-            
-            self.v['momentum'] = min(0.999, self.v['momentum'])
-            self.v['momentum'] = max(0.9, self.v['momentum'])
-            
+            self.v[name+"g"] += self.hlr/(self.popsize*self.gsigma)*np.dot(self.var[name].T, normalized_reward)
             self.v[name].mul_(self.v['momentum']).add_(d_p*(self.v[name+"g"]))
             p.data.add_(-1*lr*self.v[name]) 
             self.v[name+"g"] = 1 
+
+        self.v['momentum'] = 0.99
         
-        return loss_min[0], np.std(reward), self.v['momentum']
+        return loss_min[0], np.std(reward), c_momentum
              
 
 class SGD_PEPG():
@@ -310,21 +299,16 @@ class SGD_PEPG():
         # update the mu 
         change_mu = self.hlr * np.dot(rT, epsilon)
         self.mu += change_mu
-        self.mu[0] = min(0.999, self.mu[0])
-        self.mu[0] = max(0.9, self.mu[0])
+        self.mu[0] = min(1, self.mu[0])
+        self.mu[0] = max(0, self.mu[0])
 
         # update the sigma 
         change_sigma = self.sigma_alpha * delta_sigma
 
 #         change_sigma = np.minimum(change_sigma, self.sigma)
 #         change_sigma = np.maximum(change_sigma, - 0.5 * self.sigma)
-
+        change_sigma [1] = max(0,change_sigma[1])
         self.sigma += change_sigma
-
-#         if(self.hlr> self.hlr_limit):
-#             self.hlr *=0.999
-
-
 
         # one real step forward  
         for name, p in net.named_parameters():
@@ -333,11 +317,10 @@ class SGD_PEPG():
 
             p.data.add_(-1*lr*self.v[name])
         #reset-the g multilper 
-        self.mu[1]=1
+        self.mu[1]= 1
         c_momentum= self.mu[0]
-#         self.mu[0]=self.momentum
         
-        return loss_min[0], np.std(reward), c_momentum
+        return loss_min[0], self.sigma[1], c_momentum
 
     
         

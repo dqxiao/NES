@@ -156,7 +156,7 @@ if __name__=="__main__":
 		training_log.append([valid_acc,valid_loss,test_acc,test_loss])
 		print("{}\t{}\t{}".format(epoch,test_loss,test_acc))
 
-	fname = "{}-R-{}".format(args.optimizer,momentum)
+	fname = "{}-{}".format(args.optimizer,momentum)
 	folder ="{}/{}/".format(datasetName,model.name()) 
 	pickle_write(np.array(training_log),folder+fname,"-NN")
 
