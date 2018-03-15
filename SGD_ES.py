@@ -138,7 +138,7 @@ class SGD_OES():
         self.lr = lr 
         self.v = {} # dict for recording 
         self.var = {}
-        self.popsize = 8
+        self.popsize = 32
         self.sigma = 0.01 
         self.gsigma = 0.2 
         self.hlr = 0.1   # hyper-learning rate 
@@ -159,9 +159,7 @@ class SGD_OES():
         lr = self.lr 
 
         reward = np.zeros(self.popsize) 
-        
-  
-        # using this object 
+        #let's use validation set to turing our algorithm running 
         for i in range(self.popsize):
 
             for name, p in net.named_parameters():

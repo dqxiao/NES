@@ -1,6 +1,7 @@
 from ESUtil import * 
 import torch.cuda as torch_c
 import torch 
+import numpy as np 
 
 class PEPGVarCuda:
     def __init__(self, num_params,             # number of model parameters
@@ -51,6 +52,7 @@ class PEPGVarCuda:
           self.forget_best = True # always forget the best one if we rank
         self.done_threshold = done_threshold
         self.diversity_base = diversity_base
+        self.mdb = 0 
 
 
     def rms_stdev(self):
@@ -58,11 +60,18 @@ class PEPGVarCuda:
         return torch.mean(torch.sqrt(sigma*sigma)) 
     
     
+    def multivate_normal_entropy(self):
+        return 0.5*torch.sum(torch.log(2*np.pi*self.sigma)+1)
+    
     def set_diversity_base(self,val):
         self.diversity_base = val 
-        #done 
+    def set_mu_diversity_base(self,mdb):
+        self.mdb = mdb 
+   
     def diversity_base(self):
         return self.diversity_base
+    def mu_diversity_base(self):
+        return self.mdb 
     
     def ask(self):
         '''returns a list of parameters'''
@@ -134,7 +143,10 @@ class PEPGVarCuda:
         rT = (reward[:self.batch_size] - reward[self.batch_size:])
         rT = rT.view(1,self.batch_size)
         change_mu = self.learning_rate * torch.mm(rT,epsilon)
-        self.mu =self.mu + change_mu.view(self.mu.size())
+        delta_mu = change_mu * 0.5 * self.mdb*self.multivate_normal_entropy() 
+#         delta_mu = 0 # done 
+        self.mu =self.mu + change_mu.view(self.mu.size())+ delta_mu.view(self.mu.size()) 
+    
 
 
         #     # adjust sigma according to the adaptive sigma calculation

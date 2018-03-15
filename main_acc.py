@@ -46,9 +46,9 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 				update_model(solutions[i], model, model_shapes)
 				output = model(data)            
 				loss = F.nll_loss(output, target) # loss function
-# 				loss,acc= loss_acc_evaluate(output,target) 
-# 				reward[i] = acc             # get the value 
-				reward[i] = -loss.data[0]             # get the value 
+				loss,acc= loss_acc_evaluate(output,target) 
+				reward[i] = acc             # get the value 
+# 				reward[i] = -loss.data[0]             # get the value 
 				pop_loss += loss.data[0]
 			best_raw_reward = reward.max()
 			pop_loss/=es.popsize
@@ -63,20 +63,13 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 		# 	#resultLogs+=tempLog
 
 			if (batch_idx % 100 == 0):
-				print(epoch, batch_idx,best_raw_reward,es.diversity_base,result[-1],es.mdb)	    
+				print(epoch, batch_idx,best_raw_reward,es.diversity_base,result[-1])	    
 			curr_solution = es.current_param()
 			update_model(curr_solution, model, model_shapes)
 		running_loss/=batch_idx
-		print("{}\{}".format(epoch,running_loss))
-		if args.autotuning:        
-			db=math.pow(running_loss/2.3,0.5)*args.diversity_base
-			mdb=db/running_loss 
-			es.set_diversity_base(db) 
-			es.set_mu_diversity_base(-1*0.01*mdb) # done 
-            
-		test_acc,test_loss=evaluate(model, test_loader, print_mode=True,cuda=args.cuda)       
+		print("{}\{}".format(epoch,running_loss))      
 		if trainLog:
-			training_log.append([running_loss,test_acc,test_loss])
+			training_log.append(running_loss)
 	# 	valid_acc,valid_loss = evaluate(model,valid_loader, print_mode=False,cuda=args.cuda)
 	# 	test_acc, test_loss =evaluate(model,test_loader,print_mode=False,cuda=args.cuda)
 
@@ -90,7 +83,7 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 	# 		best_model = copy.deepcopy(model)
 	# 		print('best valid_acc', best_valid_acc * 100.)
 
-
+	evaluate(model, test_loader, print_mode=True,cuda=args.cuda)
 
 def configRun():
 	"""
@@ -178,8 +171,6 @@ if __name__=="__main__":
 	parser.add_argument('--cuda',default=False,type=bool,help='use cuda or not')
 	parser.add_argument('--epochs',default=100, type=int, help='the number of iteration')
 	parser.add_argument('--batch_size',default=100,type=int,help='batch size')
-	parser.add_argument('--autotuning',default=False,type=bool,help='auto tune hyperparameter') 
-	parser.add_argument('--sigma_init',default=0.01,type=float,help='sigma init for es') 
 	# parser.add_argument()
 	
 	args = parser.parse_args()
@@ -207,7 +198,7 @@ if __name__=="__main__":
 	else:
 		NPOPULATION = args.popsize
 
-	ea=ESArgs(NPARAMS=NPARAMS, NPOPULATION=NPOPULATION,diversity_base=args.diversity_base, opt=args.opt,lr=args.lr,sigma_init=args.sigma_init) 
+	ea=ESArgs(NPARAMS=NPARAMS, NPOPULATION=NPOPULATION,diversity_base=args.diversity_base, opt=args.opt,lr=args.lr) 
 	if args.cuda:
 		# es = createPEPGCuda(ea)
 		esCreate={
@@ -245,10 +236,7 @@ if __name__=="__main__":
 	testRuns(training_log)
 	if not os.path.exists("./"+folder):
 		os.makedirs(folder)
-	atTag=""
-	if args.autotuning:
-		atTag="mat"        
-	pickle_write(np.array(training_log),folder+fname,atTag)
+	pickle_write(np.array(training_log),folder+fname,"Acc")
 
 
 

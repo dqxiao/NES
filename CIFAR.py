@@ -24,7 +24,7 @@ import os
 
 def testRuns(training_log, trainLog=True,rewardShaping=False):
 	best_valid_acc = 0
-	# start=time.time() # just for timing
+	reward_min = None 
 	for epoch in range(1, args.epochs + 1):
 	# train loop
 		model.eval()
@@ -37,7 +37,7 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 			#done 
 
 			solutions = es.ask() 
-			#reward = np.zeros(es.popsize)
+			# reward = np.zeros(es.popsize)
 			reward = torch.zeros(es.popsize)
 			if args.cuda:
 				reward=reward.cuda()
@@ -45,10 +45,11 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 			pop_loss =0.0 
 			for i in range(es.popsize):
 				update_model(solutions[i], model, model_shapes)
-				output = model(data)
+				output = model(data)            
 				loss = F.nll_loss(output, target) # loss function
-				reward[i] = -loss.data[0]              # get the value 
-				#reward[i] = - loss.data[0]
+# 				loss,acc= loss_acc_evaluate(output,target) 
+# 				reward[i] = acc             # get the value 
+				reward[i] = -loss.data[0]             # get the value 
 				pop_loss += loss.data[0]
 			best_raw_reward = reward.max()
 			pop_loss/=es.popsize
@@ -62,15 +63,18 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 		# 	#tempLog=np.array([abs(result[1]),abs(reward.mean()),calEntropy(result[3]),abs(reward.std()),result[-1]])
 		# 	#resultLogs+=tempLog
 
-
-			if (batch_idx % 50 == 0):
-				print(epoch, batch_idx,best_raw_reward)	    
+			if (batch_idx % 100 == 0):
+				print(epoch, batch_idx,best_raw_reward,es.diversity_base,result[-1])	    
 			curr_solution = es.current_param()
 			update_model(curr_solution, model, model_shapes)
 		running_loss/=batch_idx
 		print("{}\{}".format(epoch,running_loss))
+		if args.autotuning:        
+			db=math.pow(running_loss/2.3,0.5)*args.diversity_base
+			es.set_diversity_base(db) 
+		test_acc,test_loss=evaluate(model, test_loader, print_mode=True,cuda=args.cuda)       
 		if trainLog:
-			training_log.append(running_loss)
+			training_log.append([running_loss,test_acc,test_loss])
 	# 	valid_acc,valid_loss = evaluate(model,valid_loader, print_mode=False,cuda=args.cuda)
 	# 	test_acc, test_loss =evaluate(model,test_loader,print_mode=False,cuda=args.cuda)
 
@@ -84,7 +88,6 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 	# 		best_model = copy.deepcopy(model)
 	# 		print('best valid_acc', best_valid_acc * 100.)
 
-	evaluate(model, test_loader, print_mode=True,cuda=args.cuda)
 
 def configRun():
 	"""
@@ -150,59 +153,7 @@ def mnistFeed():
 
 
 
-# def update_model(mute):
-#     mutatio=dict()
-#     for n,p in model.named_parameters():
-#         mutation[n]=t.zeros_like(p.data).normal_()*mute+1 
-#         p.data.mul_(mutation[n])
-    
-    
 
-
-# def PB_train(epoch,printTrain=True,p):
-#     # population-based training 
-#     train_loss=0 
-#     model.train()
-#     for batch_idx, (data,target) in enumerate(train_loader):
-#         data, target = Variable(data),Variable(target)
-#         data, target = data.cuda(),target.cuda()
-        
-#         best_model, best_loss= None,1000
-#         init_model = copy.copy(model)
-#         for i in range(p):
-#             update_model(0.01) 
-#             ouput = model(data)
-#             model.zero_grad() # generate gradient 
-#             loss = F.nll_loss(ouput,target)  
-#             if loss< best_loss:
-#                 best_model = copy.copy(model)
-#                 best_loss  = loss 
-#             model = init_model  
-#             optimizer.step()
-   
-#         train_loss+= best_loss 
-#         if batch_idx % 100 ==0:
-#             print("{}/{}".format(batch_idx,train_loss/(btach_idx+1)))
-        
-            
-        
-    
-
-
-# def train(epoch,printTrain=True):
-# 	model.train()
-# 	train_loss=0
-# 	for batch_idx, (data, target) in enumerate(train_loader):
-# 		data, target= Variable(data), Variable(target)
-# 		data, target= data.cuda(), target.cuda()
-# 		output = model(data)
-# 		model.zero_grad()
-# 		loss = F.nll_loss(output, target) 
-# 		train_loss += loss.data[0]
-# 		loss.backward()
-# 		optimizer.step()
-# 		if batch_idx % 100 ==0:
-# 			print('{}/{}'.format(batch_idx,train_loss/(batch_idx+1)))
 
             
     
@@ -231,6 +182,8 @@ if __name__=="__main__":
 	parser.add_argument('--cuda',default=False,type=bool,help='use cuda or not')
 	parser.add_argument('--epochs',default=500, type=int, help='the number of iteration')
 	parser.add_argument('--batch_size',default=100,type=int,help='batch size')
+	parser.add_argument('--autotuning',default=False,type=bool,help='auto tune hyperparameter')   
+	parser.add_argument('--sigma_init',default=0.1,type=float,help='sigma init for es')     
 	# parser.add_argument()
 	
 	args = parser.parse_args()
@@ -242,7 +195,8 @@ if __name__=="__main__":
 
 	# model=VGG(args.model) 
 	if args.model=="Net":
-		model = Net()
+		model = Net()# 
+# 		model = CNNNet()#
 	else:
 		model = VGG(args.model)
 	if args.cuda:
@@ -257,21 +211,14 @@ if __name__=="__main__":
 		torch.cuda.manual_seed(0)
 		model.cuda()
 
-# 	for epoch in range(args.epochs):
-# 		train(epoch)
-# 	evaluate(model, test_loader, print_mode=True,cuda=args.cuda)
-    
-# 	optimier = optim.SGD(model.parameters(), lr=args.lr/8, momentum=0.9, weight_decay=5e-4)
-# 	for epoch in range(args.epochs):
-# 		PB_train(epoch,8)
-# 	evaluate(model, test_loader, print_mode=True,cuda=args.cuda)
+
 	if args.popsize==0:	
 		NPOPULATION = int(4+3*np.ceil(np.log(NPARAMS)))
 		NPOPULATION = int(NPOPULATION/2)*2+1
 	else:
 		NPOPULATION = args.popsize
 
-	ea=ESArgs(NPARAMS=NPARAMS, NPOPULATION=NPOPULATION,diversity_base=args.diversity_base, opt=args.opt,lr=args.lr) 
+	ea=ESArgs(NPARAMS=NPARAMS, NPOPULATION=NPOPULATION,diversity_base=args.diversity_base, opt=args.opt,lr=args.lr,sigma_init=args.sigma_init) 
 	if args.cuda:
 		# es = createPEPGCuda(ea)
 		esCreate={
@@ -309,5 +256,8 @@ if __name__=="__main__":
 	testRuns(training_log)
 	if not os.path.exists("./"+folder):
 		os.makedirs(folder)
-	pickle_write(np.array(training_log),folder+fname,"")
+	atTag=""
+	if args.autotuning:
+		atTag="at"        
+	pickle_write(np.array(training_log),folder+fname,atTag)
                   
