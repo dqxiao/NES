@@ -99,6 +99,19 @@ def evaluate_anchor(model, test_loader,return_log=True):
 
 
 
+    
+def loss_acc_evaluate(output,target):
+    #return loss,acc 
+    correct = 0 
+    loss = F.nll_loss(output,target)
+    _,pred=torch.max(output.data,1)
+    correct += (pred==target.data).sum()
+    
+    
+    acc = correct/len(target)
+    return loss, acc 
+    
+    
 
 def evaluate(model, test_loader, print_mode=True, return_loss=False,cuda=False):
   model.eval()
