@@ -69,9 +69,12 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 			update_model(curr_solution, model, model_shapes)
 		running_loss/=batch_idx
 		print("{}\{}".format(epoch,running_loss))
-		if args.autotuning:        
-			db=math.pow(running_loss/2.3,0.5)*args.diversity_base
+		if args.autotuning:
+# 			print("{}\{}".format(epoch,running_loss))
+			db=math.pow(running_loss/2.33,0.5)*args.diversity_base
+			mdb=db/running_loss 
 			es.set_diversity_base(db) 
+			es.set_mu_diversity_base(-1*0.002*mdb) # done 
 		test_acc,test_loss=evaluate(model, test_loader, print_mode=True,cuda=args.cuda)       
 		if trainLog:
 			training_log.append([running_loss,test_acc,test_loss])
@@ -258,6 +261,6 @@ if __name__=="__main__":
 		os.makedirs(folder)
 	atTag=""
 	if args.autotuning:
-		atTag="at"        
+		atTag="mat"        
 	pickle_write(np.array(training_log),folder+fname,atTag)
                   

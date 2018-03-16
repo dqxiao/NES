@@ -72,7 +72,7 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 			db=math.pow(running_loss/2.3,0.5)*args.diversity_base
 			mdb=db/running_loss 
 			es.set_diversity_base(db) 
-			es.set_mu_diversity_base(-1*0.01*mdb) # done 
+			es.set_mu_diversity_base(-1*0.001*mdb) # done 0.01 for CNN  0.001 mdb 
             
 		test_acc,test_loss=evaluate(model, test_loader, print_mode=True,cuda=args.cuda)       
 		if trainLog:
