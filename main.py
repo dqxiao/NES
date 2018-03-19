@@ -212,7 +212,8 @@ if __name__=="__main__":
 		# es = createPEPGCuda(ea)
 		esCreate={
 			"PEPGVar": createPEPGVarCuda(ea),
-			"PEPG": createPEPGCuda(ea)
+			"PEPG": createPEPGCuda(ea),
+			"PEPGVariance": createPEPGVarianceCuda(ea)            
 		}
 		es= esCreate[args.optimizer]
 

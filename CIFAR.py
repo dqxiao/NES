@@ -74,7 +74,7 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 			db=math.pow(running_loss/2.33,0.5)*args.diversity_base
 			mdb=db/running_loss 
 			es.set_diversity_base(db) 
-			es.set_mu_diversity_base(-1*0.0002*mdb) # done 
+			es.set_mu_diversity_base(-1*0.0004*mdb) # done 
 		test_acc,test_loss=evaluate(model, test_loader, print_mode=True,cuda=args.cuda)       
 		if trainLog:
 			training_log.append([running_loss,test_acc,test_loss])
@@ -226,10 +226,10 @@ if __name__=="__main__":
 		# es = createPEPGCuda(ea)
 		esCreate={
 			"PEPGVar": createPEPGVarCuda(ea),
-			"PEPG": createPEPGCuda(ea)
+			"PEPG": createPEPGCuda(ea),
+			"PEPGVariance": createPEPGVarianceCuda(ea)            
 		}
 		es= esCreate[args.optimizer]
-
 	else:
 		esCreate={
 			"XNESVar": createXNESVar(ea),
@@ -237,9 +237,8 @@ if __name__=="__main__":
 			"PEPG": createPEPG(ea),
 			"PEPGVar": createPEPGVar(ea)
 		}
-
 		es=esCreate[args.optimizer]
-
+    
 
 
 	print("Debug {} function".format(es.name()))
