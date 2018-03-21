@@ -75,9 +75,9 @@ class PEPG:
     if self.rank_fitness:
       reward_table = compute_centered_ranks(reward_table)
     
-    if self.weight_decay > 0:
-      l2_decay = compute_weight_decay(self.weight_decay, self.solutions)
-      reward_table += l2_decay
+#     if self.weight_decay > 0:
+#       l2_decay = compute_weight_decay(self.weight_decay, self.solutions)
+#       reward_table += l2_decay
 
     reward_offset = 1
     if self.average_baseline:

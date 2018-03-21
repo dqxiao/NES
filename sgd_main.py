@@ -75,6 +75,7 @@ def cifar10Feed():
 
 def train(epoch,printTrain=True):
 	model.train()
+	print('{}\t{}\t{}\t{}'.format("loss","best_loss","sigma_mu","current momentum factor")) 
 	for batch_idx, (data, target) in enumerate(train_loader):
 		if args.cuda:
 			data, target = data.cuda(), target.cuda()
@@ -83,10 +84,9 @@ def train(epoch,printTrain=True):
 		model.zero_grad()
 		loss = F.nll_loss(output, target) 
 		loss.backward()
-		best_reward,reward_std,cm=optimizer.step(model,data,target,loss.data[0])
-		if batch_idx % 100 ==0:
-			print('{}\t{}\t{}\t{}'.format(loss.data[0],-1*best_reward,reward_std,cm)) 
-
+		best_reward,sigma_mu,reward_std,cm=optimizer.step(model,data,target,loss.data[0])
+		if batch_idx % 100 ==0:            
+			print('{}\t{}\t{}\t{}'.format(loss.data[0],-1*best_reward,sigma_mu,cm)) 
 		# if batch_idx % 1000 == 0 and printTrain:
 		# 	print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
 		# 		epoch, batch_idx * len(data), len(train_loader.dataset),
@@ -158,6 +158,6 @@ if __name__=="__main__":
 
 	fname = "{}-{}".format(args.optimizer,momentum)
 	folder ="{}/{}/".format(datasetName,model.name()) 
-	pickle_write(np.array(training_log),folder+fname,"-NN")
+	pickle_write(np.array(training_log),folder+fname,"")
 
 	

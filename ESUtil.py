@@ -33,7 +33,7 @@ def reverse(tensor):
     
 
 def torch_compute_weight_decay(weight_decay, model_param_tensors):
-  return - weight_decay * torch.mean(model_param_tensors*model_param_tensors,1)
+  return - weight_decay * torch.mean(torch.pow(model_param_tensors,2),1)
 
 
 

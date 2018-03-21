@@ -55,8 +55,8 @@ def testRuns(training_log, trainLog=True,rewardShaping=False):
 			running_loss+= pop_loss
 			# if True:
 			# 	reward = compute_centered_ranks(reward)
-			# 	l2_decay = compute_weight_decay(weight_decay_coef, solutions)
-			# 	reward += l2_decay
+# 				l2_decay = compute_weight_decay(weight_decay_coef, solutions)
+# 				reward += l2_decay
 			es.tell(reward)
 			result = es.result()
 		# 	#tempLog=np.array([abs(result[1]),abs(reward.mean()),calEntropy(result[3]),abs(reward.std()),result[-1]])
