@@ -11,6 +11,7 @@ from PEPGTorch import *
 from PEPGCuda import *
 from PEPGVarCuda import * 
 from PEPGVarianceCuda import * 
+from OpenESCuda import * 
 
 ESArgs = namedtuple('esArgs', ['NPARAMS', 'NPOPULATION','diversity_base','opt','lr','sigma_init'])
 
@@ -61,11 +62,22 @@ def createPEPGCuda(ea):
               sigma_limit=0.01,
               learning_rate=ea.lr,            # learning rate for standard deviation
               learning_rate_decay = 0.9999, # annealing the learning rate
-              learning_rate_limit = 0.01,   # stop annealing learning rate
+#               learning_rate_limit = 0.01,   # stop annealing learning rate
               average_baseline=False
              )
   return es 
 
+def createOESCuda(ea):
+  es = OpenESCuda(ea.NPARAMS,
+              popsize=ea.NPOPULATION,
+              sigma_init=0.01,
+              sigma_decay=0.999,
+              sigma_limit=0.01,
+              learning_rate=ea.lr,            # learning rate for standard deviation
+              learning_rate_decay = 0.9999,   # annealing the learning rate
+#               learning_rate_limit = 0.01     # stop annealing learning rate
+             )
+  return es 
 
 
 def createPEPGVarianceCuda(ea):
@@ -92,7 +104,7 @@ def createPEPGVarCuda(ea):
               sigma_limit=ea.sigma_init,
               learning_rate=ea.lr,            # learning rate for standard deviation
               learning_rate_decay = 0.9999, # annealing the learning rate
-              learning_rate_limit = 0.01,   # stop annealing learning rate
+#               learning_rate_limit = 0.01,   # stop annealing learning rate
               average_baseline=False,
               diversity_base = ea.diversity_base 
              )

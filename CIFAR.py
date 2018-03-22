@@ -206,7 +206,7 @@ if __name__=="__main__":
 		torch.cuda.manual_seed(0)
 		model.cuda()
 	NPARAMS,model_shapes=cal_nparams(model)
-
+	print("NPARAMS:{}".format(NPARAMS))
         
 # 	optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
     
@@ -227,7 +227,8 @@ if __name__=="__main__":
 		esCreate={
 			"PEPGVar": createPEPGVarCuda(ea),
 			"PEPG": createPEPGCuda(ea),
-			"PEPGVariance": createPEPGVarianceCuda(ea)            
+			"PEPGVariance": createPEPGVarianceCuda(ea),
+			"OES": createOESCuda(ea)
 		}
 		es= esCreate[args.optimizer]
 	else:

@@ -38,11 +38,11 @@ class PEPGVarCuda:
           self.batch_size = int((self.popsize - 1) / 2)
         self.forget_best = forget_best
 
-        self.batch_reward = torch_c.FloatTensor(self.batch_size*2).fill_(0.0)
+#         self.batch_reward = torch_c.FloatTensor(self.batch_size*2).fill_(0.0)
         self.mu = torch_c.FloatTensor(self.num_params).fill_(0.0)
         self.sigma = torch_c.FloatTensor(self.num_params).fill_(self.sigma_init)
-        self.curr_best_mu = torch_c.FloatTensor(self.num_params).fill_(0.0)
-        self.best_mu = torch_c.FloatTensor(self.num_params).fill_(0.0)
+#         self.curr_best_mu = torch_c.FloatTensor(self.num_params).fill_(0.0)
+#         self.best_mu = torch_c.FloatTensor(self.num_params).fill_(0.0)
 
         self.best_reward = 0
         self.first_interation = True
