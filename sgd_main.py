@@ -151,6 +151,10 @@ if __name__=="__main__":
 	training_log=[]
 	for epoch in range(1,args.epochs):
 		train(epoch,printTrain=True)
+		if epoch>100:
+				optimizer.set_lr(0.01)
+		if epoch>200:
+				optimizer.set_lr(0.001)            
 		test_acc,test_loss=evaluate(model, test_loader, print_mode=False,cuda=args.cuda)
 		valid_acc,valid_loss=evaluate(model, valid_loader,print_mode=False,cuda=args.cuda)
 		training_log.append([valid_acc,valid_loss,test_acc,test_loss])

@@ -138,7 +138,7 @@ class SGD_OES():
         self.lr = lr 
         self.v = {} # dict for recording 
         self.var = {}
-        self.popsize = 32
+        self.popsize = 8
         self.sigma = 0.01 
         self.gsigma = 0.2 
         self.hlr = 0.1   # hyper-learning rate 
@@ -152,7 +152,9 @@ class SGD_OES():
         self.momentum = momentum
         self.var['momentum']=np.random.normal(0,self.sigma,self.popsize)         
         
-        
+    def set_lr(self,nlr):
+        self.lr = nlr
+        #done let's borrow the dirty trick 
     def step(self, net, data, target, base):
         lossnum= -1 
         loss_min = base  
